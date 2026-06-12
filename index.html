@@ -427,7 +427,7 @@
       <div class="card rate-card">
         <h2><span class="n">6</span> Your freight rate</h2>
         <div class="row c3">
-          <div class="field"><label>Rate (<span class="curLbl">USD</span>)</label><input id="rate" class="num" value="" /></div>
+          <div class="field"><label>Rate (<span class="curLbl">USD</span>)</label><input id="rate" class="num" value="0" /></div>
           <div class="field"><label>Basis</label>
             <select id="rateBasis"><option value="cbm">per CBM</option><option value="kg">per kg</option><option value="container">per container</option><option value="km" id="optKm">per km</option></select></div>
           <div class="field"><label>Min charge (<span class="curLbl">USD</span>)</label><input id="minCharge" class="num" value="0" /></div>
@@ -671,7 +671,7 @@ const state={units:'metric',mode:'sea',sea:'lcl',view:'estimator',stack:1};
 const INCOTERM={EXW:{o:1,f:1,i:1,d:1,t:1},FCA:{o:0,f:1,i:1,d:1,t:1},FOB:{o:0,f:1,i:1,d:1,t:1},CFR:{o:0,f:0,i:1,d:1,t:1},CIF:{o:0,f:0,i:0,d:1,t:1},CPT:{o:0,f:0,i:1,d:1,t:1},CIP:{o:0,f:0,i:0,d:1,t:1},DAP:{o:0,f:0,i:0,d:1,t:1},DPU:{o:0,f:0,i:0,d:1,t:1},DDP:{o:0,f:0,i:0,d:0,t:0}};
 const SEA_ONLY=['FOB','FAS','CFR','CIF'];
 const CO2F={air:0.6,sea:0.016,road:0.1};  // kg CO2e per tonne-km (DEFRA/GLEC aligned)
-const RATE={air:'',sea:'85',road:''};
+const RATE={air:'0',sea:'0',road:'0'};
 const DIST={air:'',sea:'',road:''};
 let LOGO='';
 let DISCLAIMER='Estimate only — not a binding quote. Freight rate is entered by the user. Duty is on the CIF customs value; import VAT on value plus duty.';
