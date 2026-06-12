@@ -1,0 +1,1375 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Freight Cost Estimator</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@500&display=swap" rel="stylesheet">
+<style>
+  :root{--bg:#f6f7f9;--surface:#fff;--line:#e4e6ea;--line-strong:#d2d5db;--ink:#1c2128;--muted:#5b626d;--faint:#8b92a0;--blue:#1f5fa8;--blue-bg:#eef4fd;--blue-line:#bcd5f2;--amber-bg:#fdf3e0;--amber-ink:#8a5a08;--amber-line:#f0d49a;--radius:10px}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:"IBM Plex Sans",system-ui,sans-serif;font-size:14px;line-height:1.5}
+  .num{font-family:"IBM Plex Mono",monospace}
+  .wrap{max-width:1180px;margin:0 auto;padding:20px}
+  header.app{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:18px}
+  .brand{display:flex;align-items:center;gap:10px;font-size:26px;font-weight:700;letter-spacing:-.01em}
+  .dot{width:11px;height:11px;border-radius:3px;background:var(--blue)}
+  .logo-slot{width:130px;height:50px;border:1.5px dashed var(--line-strong);border-radius:8px;display:flex;align-items:center;justify-content:center;text-align:center}
+  .logo-slot span{font-size:11px;color:var(--faint)}
+  .globals{display:flex;gap:14px;flex-wrap:wrap;align-items:flex-end;background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:12px 16px;margin-bottom:14px}
+  .g-field{display:flex;flex-direction:column;gap:4px}
+  .g-field label{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.04em}
+  .fx-line{font-size:12px;color:var(--muted);align-self:flex-end;margin-left:auto;background:var(--chip-bg,#eef2f7);border:1px solid var(--line);border-radius:8px;padding:8px 12px;line-height:1.3;white-space:nowrap}.fx-line b{color:var(--ink);font-weight:600}
+  .fx-tag{font-size:10px;background:#fff;border:1px solid var(--line);border-radius:9px;padding:1px 7px;margin-left:5px;color:var(--faint)}
+  .tabs{display:flex;gap:2px;margin-bottom:18px;border-bottom:1px solid var(--line)}
+  .tabs button{border:0;background:none;padding:10px 16px;font-family:inherit;font-size:14px;color:var(--muted);cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-1px}
+  .tabs button.on{color:var(--blue);border-bottom-color:var(--blue);font-weight:600}
+  .layout{display:grid;grid-template-columns:1.5fr 1fr;gap:18px;align-items:start}
+  .card{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:16px 18px;margin-bottom:16px}
+  .card h2{font-size:13px;font-weight:600;margin:0 0 12px;color:var(--ink);display:flex;align-items:center;gap:7px}
+  .card h2 .n{width:18px;height:18px;border-radius:5px;background:#eef0f3;color:var(--muted);font-size:11px;display:inline-flex;align-items:center;justify-content:center}
+  .row{display:grid;gap:10px;margin-bottom:10px}.row.c2{grid-template-columns:1fr 1fr}.row.c3{grid-template-columns:1fr 1fr 1fr}.row:last-child{margin-bottom:0}
+  .field{display:flex;flex-direction:column;gap:4px}.field label{font-size:12px;color:var(--muted)}
+  input,select,textarea{font-family:inherit;font-size:14px;color:var(--ink);background:var(--surface);border:1px solid var(--line-strong);border-radius:7px;padding:8px 10px;width:100%;height:36px}
+  textarea{height:auto;resize:vertical;line-height:1.4}
+  input:focus,select:focus,textarea:focus{outline:none;border-color:var(--blue);box-shadow:0 0 0 3px var(--blue-bg)}
+  input[readonly]{background:#f1f3f6;color:var(--muted)}
+  .seg{display:flex;border:1px solid var(--line-strong);border-radius:7px;overflow:hidden}
+  .seg button{flex:1;border:0;background:var(--surface);padding:8px 4px;font-family:inherit;font-size:13px;color:var(--muted);cursor:pointer}
+  .seg button.on{background:var(--blue);color:#fff;font-weight:500}
+  .rate-card{background:var(--blue-bg);border-color:var(--blue-line)}.rate-card h2{color:var(--blue)}.rate-card input,.rate-card select{background:#fff}
+  .hint{font-size:11px;color:var(--faint);margin-top:3px}
+  .ico-warn{display:none;background:var(--amber-bg);border:1px solid var(--amber-line);color:var(--amber-ink);font-size:12px;padding:7px 10px;border-radius:7px;margin-top:6px;gap:7px;align-items:center}
+  .calc-line{background:#f1f3f6;border-radius:7px;padding:8px 11px;font-size:12px;color:var(--muted)}.calc-line b{color:var(--ink);font-weight:600}
+  .prow{border:1px solid var(--line);border-radius:8px;padding:10px;margin-bottom:8px}
+  .prow-top{display:grid;grid-template-columns:1fr 130px 34px;gap:8px;align-items:center;margin-bottom:8px}
+  .prow-bot{display:grid;grid-template-columns:repeat(7,1fr);gap:4px 8px;align-items:end}
+  .prow-bot .pl{font-size:11px;color:var(--muted);line-height:1.25}
+  .prow-bot input{height:32px;padding:5px 7px}
+  .p-del{height:36px;border:1px solid var(--line-strong);background:#fff;border-radius:6px;color:var(--faint);cursor:pointer;font-size:16px;padding:0}
+  .addbtn{margin-top:2px;height:34px;border:1px dashed var(--line-strong);background:#fff;border-radius:7px;color:var(--blue);font-family:inherit;font-size:13px;cursor:pointer;width:100%}
+  .result{position:sticky;top:20px}
+  .result .big-label{font-size:12px;color:var(--muted)}
+  .result .big{font-size:30px;font-weight:600;letter-spacing:-.01em;margin:2px 0}
+  .result .alt{font-size:14px;color:var(--muted);margin:-2px 0 3px}
+  .result .sub{font-size:13px;color:var(--muted);margin-bottom:14px}
+  .metrics{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:8px}
+  .metric{background:#f6f7f9;border-radius:8px;padding:10px 12px}.metric .l{font-size:11px;color:var(--muted)}.metric .v{font-size:17px;font-weight:600;margin-top:2px}
+  .note-sm{font-size:11px;color:var(--faint);margin:0 0 12px;line-height:1.5}
+  .ico-note{background:var(--blue-bg);border:1px solid var(--blue-line);color:var(--blue);font-size:12px;padding:8px 11px;border-radius:7px;margin-bottom:12px;line-height:1.5}
+  .brk{border-top:1px solid var(--line);padding-top:8px}
+  .brk .li{display:flex;justify-content:space-between;font-size:13px;padding:5px 0;color:var(--muted)}.brk .li .rt{color:var(--ink)}
+  .brk .li.off{opacity:.55}.brk .li.off .rt{text-decoration:line-through}.brk .li.off span:first-child{color:var(--faint)}
+  .brk .li.total{border-top:1px solid var(--line);margin-top:5px;padding-top:9px;font-weight:600;color:var(--ink)}
+  .brk .li .tag{font-size:10px;background:#fde9b8;color:var(--amber-ink);padding:1px 6px;border-radius:10px;margin-left:6px}
+  .override{display:flex;align-items:center;gap:8px;margin:6px 0 0;font-size:12px;color:var(--muted)}
+  .override input[type=checkbox]{width:auto;height:auto}.override input[type=text]{height:30px;width:120px}
+  .warn-box{margin-top:14px;display:flex;flex-direction:column;gap:7px}
+  .warn{background:var(--amber-bg);border:1px solid var(--amber-line);color:var(--amber-ink);font-size:12px;padding:8px 11px;border-radius:7px;display:flex;gap:7px}
+  .footnote{font-size:11px;color:var(--faint);margin-top:18px;line-height:1.6}
+  /* comparison */
+  .cmp-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+  .cmp{border:1px solid var(--line);border-radius:var(--radius);padding:16px;background:var(--surface);position:relative}
+  .cmp.rec{border:2px solid var(--blue)}
+  .cmp.excl{opacity:.5}
+  .cmp-h{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+  .cmp-h .nm{font-size:15px;font-weight:600}
+  .inc{font-size:12px;color:var(--muted);display:flex;align-items:center;gap:5px;cursor:pointer}
+  .inc input{width:auto;height:auto}
+  .cmp .field{margin-bottom:9px}
+  .cmp-out{border-top:1px solid var(--line);margin-top:6px;padding-top:10px;min-height:96px}
+  .cmp-out .big{font-size:23px;font-weight:600}
+  .cmp-out .ln{display:flex;justify-content:space-between;font-size:12px;color:var(--muted);padding:3px 0}.cmp-out .ln .num{color:var(--ink)}
+  .cmp-out .muted{color:var(--faint);font-size:13px;padding-top:20px;text-align:center}
+  .recbadge{position:absolute;top:-9px;left:14px;background:var(--blue);color:#fff;font-size:11px;padding:2px 9px;border-radius:10px}
+  /* dashboard */
+  .db-toolbar{display:flex;flex-wrap:wrap;gap:10px;align-items:flex-end;background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:12px 16px;margin-bottom:16px}
+  #a4{width:794px;max-width:100%;margin:0 auto 24px;background:#fff;border:1px solid var(--line);box-shadow:0 2px 18px rgba(0,0,0,.06);padding:34px 38px;color:#1c2128;font-size:12px}
+  #a4 h3{font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);margin:0 0 6px;font-weight:600}
+  .db-head{display:flex;justify-content:space-between;align-items:flex-start;border-bottom:2px solid var(--ink);padding-bottom:10px;margin-bottom:12px}
+  .db-co{font-size:18px;font-weight:600}.db-sub{font-size:11px;color:var(--muted)}
+  .db-logo{width:120px;height:46px;border:1px dashed var(--line-strong);border-radius:6px;display:flex;align-items:center;justify-content:center;text-align:center;font-size:10px;color:var(--faint)}
+  .db-title{font-size:15px;font-weight:600;margin-bottom:3px}
+  .db-meta{font-size:11px;color:var(--muted);margin-bottom:12px}
+  .db-parties{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-bottom:12px}
+  .db-parties b{font-size:11px;text-transform:uppercase;letter-spacing:.04em;color:var(--muted)}
+  .db-addr{color:var(--muted);white-space:pre-line}
+  .db-summary{display:flex;flex-wrap:wrap;gap:6px 18px;font-size:11px;background:#f6f7f9;border-radius:7px;padding:8px 12px;margin-bottom:12px}
+  .db-headline{margin-bottom:14px}
+  .db-big{font-size:13px;color:var(--muted)}#dbLanded{font-size:24px;font-weight:600;color:var(--ink);font-family:"IBM Plex Mono",monospace;margin-left:6px}
+  .db-alt{font-size:13px;color:var(--muted);font-family:"IBM Plex Mono",monospace}
+  .db-metrics{display:flex;gap:22px;margin-top:8px;font-size:11px;color:var(--muted)}
+  .db-metrics b{display:block;font-size:14px;color:var(--ink);font-weight:600;font-family:"IBM Plex Mono",monospace}
+  .db-cols{display:grid;grid-template-columns:1fr 1fr;gap:22px;margin-bottom:12px}
+  #a4 table{width:100%;border-collapse:collapse;font-size:11px}
+  #a4 table td{padding:3px 0;border-bottom:1px solid var(--line);vertical-align:top}
+  #a4 table td:last-child{text-align:right;font-family:"IBM Plex Mono",monospace}
+  .db-box{border:1px solid var(--line-strong);border-radius:8px;padding:12px 14px;margin-bottom:12px}
+  .db-foot{border-top:1px solid var(--line);padding-top:8px;font-size:10px;color:var(--faint);line-height:1.5}
+  .subnav{display:flex;gap:8px;margin-bottom:16px}
+  .subbtn{border:1px solid var(--line-strong);background:var(--surface);border-radius:8px;padding:8px 16px;font-family:inherit;font-size:13px;color:var(--muted);cursor:pointer}
+  .subbtn.on{background:var(--blue);color:#fff;border-color:var(--blue);font-weight:500}
+  .kpi-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:12px;margin-bottom:16px}
+  .kpi{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:14px 16px}
+  .kpi .l{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.04em}
+  .kpi .v{font-size:21px;font-weight:600;margin-top:5px;font-family:"IBM Plex Mono",monospace}
+  .kpi .s{font-size:12px;color:var(--muted);margin-top:3px}
+  .kpi.hl{border:2px solid var(--blue)}
+  .dash-cols{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+  .comp-row{margin-bottom:9px}
+  .comp-row .t{display:flex;justify-content:space-between;font-size:12px;margin-bottom:3px}.comp-row .t .rt{font-family:"IBM Plex Mono",monospace}
+  .bar{height:8px;background:#eef0f3;border-radius:5px;overflow:hidden}.bar>span{display:block;height:100%;background:var(--blue)}
+  .mode-row{margin-bottom:13px}
+  .mode-row .t{display:flex;justify-content:space-between;font-size:13px;margin-bottom:5px}
+  .mode-row .meta{font-size:11px;color:var(--faint);margin-top:4px}
+  .mode-bar{height:22px;background:#eef0f3;border-radius:6px;overflow:hidden}
+  .mode-bar>span{display:block;height:100%;background:var(--blue)}
+  .mode-bar.best>span{background:#2a9d5c}
+  @media print{
+    @page{size:A4;margin:0}
+    body{background:#fff}
+    .wrap>header,.globals,.tabs,#viewEstimator,#viewComparison,.subnav,#dashOverview,.db-toolbar{display:none!important}
+    #viewDashboard{display:block!important}
+    #dashQuote{display:block!important}
+    #a4{box-shadow:none;border:0;margin:0;width:210mm;min-height:297mm;padding:14mm}
+  }
+  .lang-sel{height:34px;border:1px solid var(--line-strong);border-radius:7px;background:#fff;font-family:inherit;font-size:12px;font-weight:600;padding:0 8px;color:var(--ink);cursor:pointer}
+  .hamb{width:38px;height:38px;border:1px solid var(--line-strong);background:#fff;border-radius:8px;font-size:17px;cursor:pointer;color:var(--ink)}
+  .drawer-ov{position:fixed;inset:0;background:rgba(0,0,0,.35);display:none;z-index:40}
+  .drawer{position:fixed;top:0;left:0;height:100%;width:380px;max-width:92vw;background:var(--surface);box-shadow:2px 0 24px rgba(0,0,0,.18);transform:translateX(-100%);transition:transform .2s;z-index:41;overflow-y:auto;padding:18px 20px}
+  .drawer.open{transform:translateX(0)}
+  .drawer h3{font-size:12px;text-transform:uppercase;letter-spacing:.04em;color:var(--muted);margin:18px 0 8px;border-top:1px solid var(--line);padding-top:12px}
+  .drawer .ah{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
+  .drawer .ah .x{border:0;background:none;font-size:24px;cursor:pointer;color:var(--muted);line-height:1}
+  .banner{background:var(--amber-bg);border:1px solid var(--amber-line);color:var(--amber-ink);font-size:12px;padding:8px 11px;border-radius:7px;margin-bottom:10px;line-height:1.45}
+  .ulist .uitem{display:flex;justify-content:space-between;align-items:center;font-size:13px;padding:6px 0;border-bottom:1px solid var(--line)}
+  .ulist .uitem button{border:0;background:none;color:var(--faint);cursor:pointer;font-size:16px}
+  .alogo{width:100%;height:70px;border:1px dashed var(--line-strong);border-radius:8px;display:flex;align-items:center;justify-content:center;overflow:hidden;margin-bottom:8px}
+  .alogo img{max-width:100%;max-height:100%}
+  .logo-slot img{max-width:100%;max-height:100%}.db-logo img{max-width:100%;max-height:100%}
+  .help-line{font-size:12px;color:var(--muted);text-align:center;flex:1}
+  .help-line b{color:var(--ink)}
+  .dash-who{font-size:13px;color:var(--muted);background:var(--chip-bg,#eef2f7);border:1px solid var(--line);border-radius:8px;padding:8px 12px;margin-bottom:14px}
+  .dash-who b{color:var(--ink)}
+  .newbtn{height:34px;border:1px solid var(--blue);background:#fff;color:var(--blue);border-radius:7px;padding:0 14px;font-family:inherit;font-size:13px;cursor:pointer}
+  .infodot{position:relative;display:inline-flex;align-items:center;justify-content:center;width:15px;height:15px;border:1px solid var(--muted);color:var(--muted);border-radius:50%;font-size:10px;font-style:normal;font-weight:700;cursor:help;margin-left:5px;vertical-align:middle;line-height:1}
+  .infodot:hover{background:var(--ink);color:#fff;border-color:var(--ink)}
+  .infodot:hover::after{content:attr(data-tip);position:absolute;left:50%;bottom:150%;transform:translateX(-50%);width:230px;max-width:46vw;background:#1f2430;color:#fff;font-size:11.5px;font-weight:400;line-height:1.5;padding:9px 11px;border-radius:8px;white-space:normal;text-align:left;z-index:60;box-shadow:0 6px 18px rgba(0,0,0,.28);pointer-events:none}
+  .infodot:hover::before{content:'';position:absolute;left:50%;bottom:150%;transform:translateX(-50%) translateY(99%);border:6px solid transparent;border-top-color:#1f2430;z-index:60}
+  .kpi{overflow:visible}
+  .refresh-warn{display:flex;align-items:center;gap:10px;background:var(--amber-bg);border:1px solid var(--amber-line);color:var(--amber-ink);font-size:12.5px;padding:10px 14px;border-radius:9px;margin-bottom:16px;line-height:1.45}
+  .refresh-warn b{font-weight:600}
+  .refresh-warn button{margin-left:auto;border:0;background:none;font-size:18px;cursor:pointer;color:var(--amber-ink);line-height:1;flex:none}
+  .draft-remind{display:flex;align-items:center;gap:12px;background:#eef4ff;border:1px solid #c5d8f7;color:#234; font-size:13px;padding:11px 14px;border-radius:9px;margin-bottom:16px;line-height:1.45}
+  .draft-remind .acts{margin-left:auto;display:flex;gap:8px;flex:none}
+  .draft-remind .acts button{border:1px solid var(--line-strong);background:#fff;border-radius:6px;padding:5px 11px;font-family:inherit;font-size:12px;cursor:pointer}
+  .drawer .vrow{display:flex;align-items:center;gap:8px;font-size:13px;margin:7px 0;cursor:pointer}
+  .set-grp{border:1px solid var(--line);border-radius:10px;padding:0 14px;margin-bottom:4px}
+  .set-row{display:flex;align-items:center;justify-content:space-between;gap:14px;padding:12px 0;border-bottom:1px solid var(--line)}
+  .set-row:last-child{border-bottom:0}
+  .set-row .lab{font-size:13px;color:var(--ink);font-weight:500}
+  .set-row .lab small{display:block;color:var(--muted);font-size:11.5px;font-weight:400;margin-top:2px}
+  .tgl{position:relative;display:inline-block;width:40px;height:23px;flex:none}
+  .tgl input{opacity:0;width:0;height:0}
+  .tgl span{position:absolute;inset:0;background:#cfd6e0;border-radius:23px;transition:.18s;cursor:pointer}
+  .tgl span::before{content:"";position:absolute;width:17px;height:17px;left:3px;top:3px;background:#fff;border-radius:50%;transition:.18s;box-shadow:0 1px 2px rgba(0,0,0,.2)}
+  .tgl input:checked+span{background:var(--blue)}
+  .tgl input:checked+span::before{transform:translateX(17px)}
+  .pill{font-size:10px;font-weight:600;padding:1px 8px;border-radius:10px;vertical-align:middle;margin-left:6px}
+  .pill.pf{background:#e2f3e8;color:#1f7a44}.pill.pd{background:var(--amber-bg);color:var(--amber-ind,var(--amber-ink))}
+  .appfoot{text-align:center;color:var(--faint);font-size:11px;margin-top:26px;padding-top:14px;border-top:1px solid var(--line)}
+  .saved-list .srow{display:flex;justify-content:space-between;align-items:center;border:1px solid var(--line);border-radius:8px;padding:10px 12px;margin-bottom:8px}
+  .saved-list .srow .meta{font-size:12px;color:var(--muted)}
+  .saved-list .srow .acts button{margin-left:6px;border:1px solid var(--line-strong);background:#fff;border-radius:6px;padding:5px 10px;font-family:inherit;font-size:12px;cursor:pointer}
+  #viewGuide{counter-reset:gs}
+  #viewGuide > .card{background:none;border:0;padding:0;box-shadow:none}
+  #viewGuide > .card > h2{margin:0 0 4px}
+  #viewGuide > .card > .hint{margin-bottom:20px}
+  #viewGuide .gsec{background:var(--surface);border:1px solid var(--line);border-left:3px solid var(--blue);border-radius:11px;padding:16px 20px;margin-bottom:14px}
+  #viewGuide .gsec h3{font-size:14px;margin:0 0 10px;padding-bottom:9px;border-bottom:1px solid var(--line);color:var(--ink)}
+  #viewGuide .gsec h3::before{counter-increment:gs;content:counter(gs);display:inline-flex;align-items:center;justify-content:center;width:21px;height:21px;background:var(--blue);color:#fff;border-radius:6px;font-size:11px;margin-right:9px;vertical-align:middle}
+  #viewGuide .gsec p{font-size:13.5px;line-height:1.65;color:var(--muted);margin:0 0 9px}
+  #viewGuide .gsec p:last-child{margin-bottom:0}
+  #viewGuide dl{margin:0}#viewGuide dt{font-weight:600;font-size:13px;margin-top:8px}#viewGuide dd{margin:2px 0 0;color:var(--muted);font-size:13px}
+  .gtag{display:inline-block;font-size:10px;padding:1px 7px;border-radius:10px;margin-left:6px}
+  .gtag.real{background:#e2f3e8;color:#1f7a44}.gtag.est{background:var(--amber-bg);color:var(--amber-ink)}
+</style>
+</head>
+<body>
+<div id="loginGate" style="position:fixed;inset:0;background:rgba(255,255,255,.97);z-index:99999;display:none;align-items:center;justify-content:center">
+  <div style="width:340px;max-width:90vw;border:1px solid #e5e7eb;border-radius:14px;padding:26px;box-shadow:0 10px 40px rgba(0,0,0,.10);background:#fff">
+    <div id="lgSetup" style="display:none">
+      <div style="font-weight:700;font-size:18px;margin-bottom:4px">Set up the admin</div>
+      <div class="hint" style="margin-bottom:14px">No admin exists yet. Create the first admin account — you become the owner and can add everyone else.</div>
+      <div class="field" style="margin-bottom:10px"><label>Your name</label><input id="suName"></div>
+      <div class="field" style="margin-bottom:10px"><label>Create password</label><input id="suPw" type="password"></div>
+      <div class="field" style="margin-bottom:14px"><label>Confirm password</label><input id="suPw2" type="password"></div>
+      <button id="suBtn" class="newbtn" style="width:100%">Create admin</button>
+    </div>
+    <div id="lgLogin" style="display:none">
+      <div style="font-weight:700;font-size:18px;margin-bottom:4px">Sign in</div>
+      <div class="hint" style="margin-bottom:14px">Select your name and enter your password.</div>
+      <div class="field" style="margin-bottom:10px"><label>Name</label><select id="lgName"></select></div>
+      <div class="field" style="margin-bottom:14px"><label>Password</label><input id="lgPin" type="password"></div>
+      <button id="lgBtn" class="newbtn" style="width:100%">Sign in</button>
+    </div>
+    <div id="lgNewpw" style="display:none">
+      <div style="font-weight:700;font-size:18px;margin-bottom:4px">Create your password</div>
+      <div class="hint" style="margin-bottom:6px">Signing in as <b id="npName"></b> for the first time.</div>
+      <div class="hint" style="margin-bottom:14px">Choose a password you will use every time from now on.</div>
+      <div class="field" style="margin-bottom:10px"><label>New password</label><input id="npPw" type="password"></div>
+      <div class="field" style="margin-bottom:14px"><label>Confirm password</label><input id="npPw2" type="password"></div>
+      <button id="npBtn" class="newbtn" style="width:100%">Set password & sign in</button>
+      <div style="margin-top:10px;text-align:center"><a href="#" id="npBack" style="font-size:12px;color:var(--muted)">Back</a></div>
+    </div>
+    <div id="lgErr" style="color:#b91c1c;font-size:13px;margin-top:10px;min-height:16px"></div>
+    <div style="margin-top:14px;text-align:center"><a href="#" id="lgLocal" style="font-size:12px;color:var(--muted)">Use locally without backend</a></div>
+  </div>
+</div>
+<div class="wrap">
+  <header class="app">
+    <div style="display:flex;align-items:center;gap:12px">
+      <button id="adminBtn" class="hamb" title="Admin settings">&#9776;</button>
+      <div class="brand">Freight Cost Estimator</div>
+    </div>
+    <div class="logo-slot" id="headerLogo" title="Company logo — set in admin"><span>Company logo<br>(set in admin)</span></div>
+  </header>
+
+  <div class="drawer-ov" id="drawerOv"></div>
+  <aside class="drawer" id="adminDrawer">
+    <div class="ah"><b>Admin settings</b><button class="x" id="adminClose">&times;</button></div>
+    <div class="field" style="margin-bottom:8px"><label>Language</label>
+      <select id="langSel"><option value="en">English</option><option value="de">Deutsch</option><option value="it">Italiano</option></select></div>
+    <button id="openGuide" class="newbtn" style="width:100%;margin-bottom:14px">Open guide &amp; glossary</button>
+    <div class="banner" id="previewBanner">Preview mode — changes apply to this session only. Connect the Apps Script backend to sign in, manage users, and save settings for everyone.</div>
+
+    <h3>Backend</h3>
+    <div class="field" style="margin-bottom:6px"><label>Backend Web App URL</label><input id="adminBackendUrl" placeholder="https://script.google.com/.../exec"></div>
+    <div class="row c2" style="margin-bottom:4px"><div class="field"><button id="testBackend" class="addbtn" style="margin-top:0">Test connection</button></div><div class="field"><button id="disconnectBackend" class="addbtn" style="margin-top:0">Disconnect</button></div></div>
+    <div class="hint" id="backendStatus" style="margin-bottom:12px"></div>
+
+    <h3>Company profile</h3>
+    <div class="field" style="margin-bottom:6px"><label>Company name</label><input id="adminCompany" placeholder="Your Company Ltd"></div>
+    <div class="field" style="margin-bottom:6px"><label>Company address</label><textarea id="adminAddr" rows="2"></textarea></div>
+    <div class="row c2" style="margin-bottom:6px"><div class="field"><label>Default currency</label><select id="adminCur"><option>USD</option><option>EUR</option><option>GBP</option><option>CNY</option><option>INR</option><option>JPY</option></select></div><div class="field"><label>Default VAT %</label><input id="adminVat" class="num"></div></div>
+    <div class="field"><label>Quote number prefix</label><input id="adminPrefix" placeholder="Q-"></div>
+
+    <h3>Company logo</h3>
+    <div class="alogo" id="adminLogoPrev"><span class="hint">No logo uploaded</span></div>
+    <input id="adminLogo" type="file" accept="image/*">
+
+    <h3>CO₂ factors (kg CO₂e per tonne-km)</h3>
+    <div class="row c3"><div class="field"><label>Air</label><input id="adminCo2Air" class="num"></div><div class="field"><label>Sea</label><input id="adminCo2Sea" class="num"></div><div class="field"><label>Road</label><input id="adminCo2Road" class="num"></div></div>
+
+    <h3>Default charges</h3>
+    <div class="row c3"><div class="field"><label>Origin</label><input id="adminOrig" class="num"></div><div class="field"><label>Destination</label><input id="adminDest" class="num"></div><div class="field"><label>Insurance %</label><input id="adminIns" class="num"></div></div>
+
+    <h3>Display &amp; sources</h3>
+    <div class="set-grp">
+      <div class="set-row"><div class="lab">Transit time<small>Show transit days in the calculator &amp; PDF</small></div><label class="tgl"><input type="checkbox" id="visTransit" checked><span></span></label></div>
+      <div class="set-row"><div class="lab">Carbon footprint<small>Show CO₂e in the calculator &amp; PDF</small></div><label class="tgl"><input type="checkbox" id="visCarbon" checked><span></span></label></div>
+    </div>
+    <div class="field" style="margin-top:12px"><label>Carbon footprint source</label>
+      <select id="carbonMode"><option value="manual">Manual factors (built-in, free)</option><option value="ecofreight">EcoFreight API — needs backend</option></select></div>
+    <div class="hint" id="carbonNote" style="margin-top:6px"></div>
+
+    <h3>Users (Prepared by)</h3>
+    <div class="ulist" id="adminUsers"></div>
+    <div class="row c2" style="margin-top:8px"><div class="field"><input id="adminNewUser" placeholder="New name"></div><div class="field"><button id="adminAddUser" class="addbtn" style="margin-top:0">+ Add user</button></div></div>
+
+    <button id="saveSettingsBtn" class="newbtn" style="width:100%;margin:4px 0 14px;display:none">Save all settings to Sheet</button>
+
+    <h3 id="comingHdr">Coming with the backend</h3>
+    <div class="hint" id="comingNote">Connect the Google Sheet backend to manage users and per-user permissions here, use your own lane transit times, and save every setting to the shared Sheet. The first person to connect sets up the admin account and becomes the owner.</div>
+  </aside>
+
+  <div class="globals">
+    <div class="g-field"><label>Main currency</label>
+      <select id="curBase"><option>USD</option><option>EUR</option><option>GBP</option><option>CNY</option><option>INR</option><option>JPY</option></select></div>
+    <div class="g-field"><label>Alternate currency</label>
+      <select id="curRep"><option>GBP</option><option>USD</option><option>EUR</option><option>CNY</option><option>INR</option><option>JPY</option><option>(none)</option></select></div>
+    <div class="g-field"><label>Exchange rate</label><input id="fxRate" class="num" style="width:120px" value="0.79" /></div>
+    <div class="g-field"><label>Units</label>
+      <div class="seg" style="width:170px"><button data-units="metric" class="on">Metric</button><button data-units="imperial">Imperial</button></div></div>
+    <div class="fx-line" id="fxStatus">1 USD = <b>0.79</b> GBP</div>
+  </div>
+
+  <div class="tabs">
+    <button data-view="estimator" class="on">Estimator</button>
+    <button data-view="comparison">Comparison</button>
+    <button data-view="dashboard">Dashboard</button>
+    <button data-view="quote">Quotation (PDF)</button>
+    <button data-view="saved">Saved Quotes</button>
+  </div>
+
+  <div class="refresh-warn" id="refreshWarn">
+    <span>&#9888; <b>Not saved automatically.</b> This is a live page &mdash; if you refresh or close the tab, any unsaved work is lost. Save your quote when you're done (it stays in Saved Quotes for this session, and in the shared Sheet once the backend is connected).</span>
+    <button id="refreshWarnX" title="Dismiss">&times;</button>
+  </div>
+
+  <div class="draft-remind" id="draftRemind" style="display:none"></div>
+
+  <!-- ESTIMATOR VIEW -->
+  <div id="viewEstimator">
+    <div style="display:flex;justify-content:flex-end;margin-bottom:12px"><button id="newQuote" class="newbtn">+ New quotation</button></div>
+  <div class="layout">
+    <div>
+      <div class="card">
+        <h2><span class="n">1</span> Parties</h2>
+        <div class="row c2">
+          <div class="field"><label>Supplying entity (supplier)</label><input id="shipName" placeholder="Supplier Co. Ltd" /></div>
+          <div class="field"><label>Buying entity (buyer)</label><input id="consName" placeholder="Your Company Ltd" /></div>
+        </div>
+        <div class="row c2">
+          <div class="field"><label>Supplying entity address</label><textarea id="shipAddr" rows="2" placeholder="Street, city, country"></textarea></div>
+          <div class="field"><label>Buying entity / delivery address</label><textarea id="consAddr" rows="2" placeholder="Street, city, country"></textarea></div>
+        </div>
+        <div class="row c2">
+          <div class="field"><label>Supplier contact (optional)</label><input id="shipContact" placeholder="Contact person" /></div>
+          <div class="field"><label>Buyer contact (optional)</label><input id="consContact" placeholder="Contact person" /></div>
+        </div>
+        <div class="row c2">
+          <div class="field"><label>Supplier phone (optional)</label><input id="shipPhone" placeholder="Phone" /></div>
+          <div class="field"><label>Buyer phone (optional)</label><input id="consPhone" placeholder="Phone" /></div>
+        </div>
+        <div class="row c2">
+          <div class="field"><label>Supplier email (optional)</label><input id="shipEmail" placeholder="Email" /></div>
+          <div class="field"><label>Buyer email (optional)</label><input id="consEmail" placeholder="Email" /></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2><span class="n">2</span> Route &amp; mode</h2>
+        <div class="row c2">
+          <div class="field"><label>Origin</label><input id="origin" value="Shanghai, CN" /></div>
+          <div class="field"><label>Destination</label><input id="dest" value="Birmingham, UK" /></div>
+        </div>
+        <div class="row"><div class="field"><label>Transport mode</label>
+          <div class="seg" id="modeSeg"><button data-mode="air">Air</button><button data-mode="sea" class="on">Sea</button><button data-mode="road">Road</button></div></div></div>
+        <div class="row" id="seaServiceRow"><div class="field"><label>Ocean service</label>
+          <div class="seg" id="seaSeg"><button data-sea="lcl" class="on">LCL</button><button data-sea="fcl">FCL</button></div></div></div>
+        <div class="row c2" id="truckRow" style="display:none">
+          <div class="field"><label>Truck body</label>
+            <select id="truck"><option value="420|180|190|1200">Van / Sprinter (4.2×1.8×1.9 m · 1.2 t)</option><option value="600|240|240|2800">7.5 t box (6.0×2.4×2.4 m · 2.8 t)</option><option value="720|245|245|6000">12 t box (7.2×2.45×2.45 m · 6 t)</option><option value="920|245|250|10000">18 t box (9.2×2.45×2.5 m · 10 t)</option><option value="1360|245|270|24000" selected>Semi-trailer 13.6 m (13.6×2.45×2.7 m · 24 t)</option><option value="1360|248|300|24000">Mega trailer 13.6 m (13.6×2.48×3.0 m · 24 t)</option></select></div><div></div></div>
+        <div class="row" id="stackRow" style="display:none"><div class="field"><label>Stacking level</label>
+            <div class="seg" id="stackSeg"><button data-s="1" class="on">Single</button><button data-s="2">Double</button><button data-s="3">Triple</button></div>
+            <div class="hint">How many items can be stacked vertically. Capped by item height vs the container/truck internal height.</div></div></div>
+        <div class="row c2" id="fclRow" style="display:none">
+          <div class="field"><label>Container</label>
+            <select id="container"><option value="589|234|239|28200">20' GP (5.9×2.34×2.39 m · 28 t)</option><option value="1203|234|239|28800">40' GP (12.0×2.34×2.39 m · 29 t)</option><option value="1203|234|269|28600">40' HC (12.0×2.34×2.69 m · 29 t)</option><option value="1355|234|269|27700">45' HC (13.6×2.34×2.69 m · 28 t)</option></select></div><div></div></div>
+        <div class="row c2">
+          <div class="field"><label>Route distance (<span id="distUnitLbl">km</span>)</label>
+            <div style="display:flex;gap:8px;align-items:center"><input id="distance" class="num" value="19000" style="flex:1" />
+            <div class="seg" id="seaUnitSeg" style="display:none;width:auto"><button type="button" data-su="km" class="on">km</button><button type="button" data-su="nm">NM</button></div></div></div>
+          <div class="field" style="justify-content:flex-end"><span class="hint">Drives road cost, carbon footprint and transit estimates. Approximate is fine.</span></div></div>
+      </div>
+
+      <div class="card">
+        <h2><span class="n">3</span> Products</h2>
+        <div id="prows"></div>
+        <button class="addbtn" id="addProduct">+ Add product</button>
+        <div class="hint">Each product carries its own HS code and Duty %. Freight &amp; insurance are split across products by value; VAT is a single destination rate (set below).</div>
+      </div>
+
+      <div class="card">
+        <h2><span class="n">4</span> Cargo &amp; packing</h2>
+        <div class="row c2">
+          <div class="field"><label>Pallet type</label>
+            <select id="pallet"><option value="120|80">EUR 120×80 cm</option><option value="120|100">Std 120×100 cm</option></select></div>
+          <div class="field"><label>Loaded pallet height (<span class="u-l">cm</span>)</label><input id="palletH" class="num" value="120" /></div>
+        </div>
+        <div class="row c2">
+          <div class="field"><label>Pallets needed</label><input id="palletsOv" class="num" placeholder="auto" /></div>
+          <div class="field" style="justify-content:flex-end"><span class="hint">Leave blank to auto-estimate from product volume.</span></div>
+        </div>
+        <div class="calc-line" id="packLine">—</div>
+      </div>
+
+      <div class="card">
+        <h2><span class="n">5</span> Value, duty &amp; terms</h2>
+        <div class="row c2">
+          <div class="field"><label>Cargo value (<span class="curLbl">USD</span>)</label><input id="cargoValue" class="num" readonly /></div>
+          <div class="field"><label>VAT / GST %</label><input id="vatPct" class="num" value="20" /></div>
+        </div>
+        <div class="row"><div class="field"><label>Incoterm</label>
+          <select id="incoterm">
+            <option value="EXW">EXW</option><option value="FCA">FCA</option><option value="FOB" selected>FOB</option>
+            <option value="CFR">CFR</option><option value="CIF">CIF</option><option value="CPT">CPT</option><option value="CIP">CIP</option>
+            <option value="DAP">DAP</option><option value="DPU">DPU</option><option value="DDP">DDP</option>
+          </select>
+          <div class="ico-warn" id="icoWarn"></div></div></div>
+      </div>
+
+      <div class="card rate-card">
+        <h2><span class="n">6</span> Your freight rate</h2>
+        <div class="row c3">
+          <div class="field"><label>Rate (<span class="curLbl">USD</span>)</label><input id="rate" class="num" value="85" /></div>
+          <div class="field"><label>Basis</label>
+            <select id="rateBasis"><option value="cbm">per CBM</option><option value="kg">per kg</option><option value="container">per container</option><option value="km" id="optKm">per km</option></select></div>
+          <div class="field"><label>Min charge (<span class="curLbl">USD</span>)</label><input id="minCharge" class="num" value="0" /></div>
+        </div>
+        <div class="row c3">
+          <div class="field"><label>Origin charges (<span class="curLbl">USD</span>)</label><input id="originChg" class="num" value="0" /></div>
+          <div class="field"><label>Destination charges (<span class="curLbl">USD</span>)</label><input id="destChg" class="num" value="300" /></div>
+          <div class="field"><label>Insurance %</label><input id="insPct" class="num" value="0.3" /></div>
+        </div>
+        <div class="hint">From your forwarder quote — the tool builds the full landed cost from this.</div>
+      </div>
+    </div>
+
+    <div class="result">
+      <div class="card">
+        <div class="big-label">Estimated landed cost</div>
+        <div class="big num" id="landed">—</div>
+        <div class="alt num" id="landedAlt"></div>
+        <div class="sub" id="landedSub">—</div>
+        <div class="metrics">
+          <div class="metric"><div class="l">Freight</div><div class="v num" id="mFreight">—</div></div>
+          <div class="metric"><div class="l">Carbon footprint</div><div class="v num" id="mCo2">—</div></div>
+        </div>
+        <div class="note-sm" id="chargeNote"></div>
+        <div class="ico-note" id="icoNote"></div>
+        <div class="brk" id="breakdown"></div>
+        <div class="override">
+          <input type="checkbox" id="ovFreightChk" />
+          <label for="ovFreightChk" style="cursor:pointer">Override freight</label>
+          <input type="text" id="ovFreight" class="num" placeholder="amount" disabled />
+        </div>
+        <div class="warn-box" id="warnings"></div>
+      </div>
+      <div class="footnote">
+        Estimate only, not a binding quote. Duty is calculated on the CIF customs value (goods + insurance + freight); import VAT is charged on that value plus the duty.
+      </div>
+    </div>
+  </div>
+  </div>
+
+  <!-- COMPARISON VIEW -->
+  <div id="viewComparison" style="display:none">
+    <div class="card" style="margin-bottom:14px">
+      <div style="font-size:13px;color:var(--muted)">Same shipment, costed across modes. Your estimator rate carries into its mode; enter rates for the others. Toggle off any mode that isn't possible for this route.</div>
+    </div>
+    <div class="cmp-grid">
+      <div class="cmp" id="cmp-air">
+        <div class="cmp-h"><span class="nm">Air</span><label class="inc"><input type="checkbox" class="cmp-on" data-m="air" checked> Include</label></div>
+        <div class="field"><label class="cmp-rl" data-m="air">Rate (<span class="curLbl">USD</span> per kg)</label><input class="cmp-rate num" data-m="air" placeholder="rate"></div>
+        <div class="field"><label>Distance (<span class="u-d">km</span>) <span class="hint" style="display:inline">(optional)</span></label><input class="cmp-dist num" data-m="air" placeholder="route dist"></div>
+        <div class="field"><label>Transit days <span class="hint" style="display:inline">(optional)</span></label><input class="cmp-tr num" data-m="air" placeholder="—"></div>
+        <div class="cmp-out" id="out-air"></div>
+      </div>
+      <div class="cmp" id="cmp-sea">
+        <div class="cmp-h"><span class="nm">Sea</span><label class="inc"><input type="checkbox" class="cmp-on" data-m="sea" checked> Include</label></div>
+        <div class="seg cmp-seaseg" style="margin-bottom:9px"><button class="cmp-sea on" data-sea="lcl">LCL</button><button class="cmp-sea" data-sea="fcl">FCL</button></div>
+        <div class="field"><label class="cmp-rl" data-m="sea">Rate (<span class="curLbl">USD</span> per CBM)</label><input class="cmp-rate num" data-m="sea" placeholder="rate"></div>
+        <div class="field"><label>Distance (<span class="seaUnitLbl">km</span>) <span class="hint" style="display:inline">(optional)</span></label>
+          <div style="display:flex;gap:8px;align-items:center"><input class="cmp-dist num" data-m="sea" placeholder="route dist" style="flex:1">
+          <div class="seg" style="width:auto"><button type="button" data-su="km" class="on">km</button><button type="button" data-su="nm">NM</button></div></div></div>
+        <div class="field"><label>Transit days <span class="hint" style="display:inline">(optional)</span></label><input class="cmp-tr num" data-m="sea" placeholder="—"></div>
+        <div class="cmp-out" id="out-sea"></div>
+      </div>
+      <div class="cmp" id="cmp-road">
+        <div class="cmp-h"><span class="nm">Road</span><label class="inc"><input type="checkbox" class="cmp-on" data-m="road" checked> Include</label></div>
+        <div class="field"><label class="cmp-rl" data-m="road">Rate (<span class="curLbl">USD</span> per km)</label><input class="cmp-rate num" data-m="road" placeholder="rate"></div>
+        <div class="field"><label>Distance (<span class="u-d">km</span>) <span class="hint" style="display:inline">(optional)</span></label><input class="cmp-dist num" data-m="road" placeholder="route dist"></div>
+        <div class="field"><label>Transit days <span class="hint" style="display:inline">(optional)</span></label><input class="cmp-tr num" data-m="road" placeholder="—"></div>
+        <div class="cmp-out" id="out-road"></div>
+      </div>
+    </div>
+    <div class="footnote">Road uses the distance from the Route &amp; mode section. Excluded modes are skipped. Cheapest included mode is flagged.</div>
+  </div>
+
+  <div id="viewDashboard" style="display:none">
+    <div id="dashOverview">
+      <div class="dash-who" id="dashWho"></div>
+      <div class="kpi-grid" id="kpiGrid"></div>
+      <div class="dash-cols">
+        <div class="card"><h2>Cost composition (your cost)</h2><div id="ovComposition"></div></div>
+        <div class="card"><h2>Mode comparison</h2><div id="ovModes"></div><div class="hint" style="margin-top:8px">Bars show total landed cost for modes with a rate. Carbon footprint and transit show for every included mode.</div></div>
+      </div>
+    </div>
+  </div>
+
+  <div id="viewQuote" style="display:none">
+      <div class="db-toolbar">
+        <div class="g-field"><label>Company name</label><input id="dbCompany" placeholder="Your Company Ltd"></div>
+        <div class="g-field"><label>Quote #</label><input id="dbQuoteNo" placeholder="Q-0001"></div>
+        <div class="g-field"><label>Quote date</label><input id="dbDate" type="date"></div>
+        <div class="g-field"><label>Prepared by</label><select id="dbPrep"><option value="">— select —</option><option>Alex Morgan</option><option>Priya Shah</option><option>Sam Lee</option><option>Jordan Diaz</option></select></div>
+        <div class="g-field"><label>Valid until (optional)</label><input id="dbValid" type="date"></div>
+        <div class="g-field"><label>Quote name (optional)</label><input id="quoteName" placeholder="e.g. Acme – spring order"></div>
+        <span id="saveMsg" class="hint" style="margin-left:auto;align-self:center"></span>
+        <button id="saveQuote" style="height:36px;border:1px solid var(--line-strong);background:#fff;border-radius:7px;padding:0 14px;font-family:inherit;cursor:pointer">Save quote</button>
+        <button id="exportPdf" style="height:36px;border:1px solid var(--blue);background:var(--blue);color:#fff;border-radius:7px;padding:0 16px;font-family:inherit;cursor:pointer">Export PDF / Print</button>
+      </div>
+      <div class="field" style="margin-bottom:16px"><label>Quotation disclaimer / footer <span class="hint" style="display:inline">(prints at the bottom of the PDF)</span></label><textarea id="adminDisc" rows="2"></textarea></div>
+      <div id="a4">
+        <div class="db-head">
+          <div><div class="db-co" id="dbCompany2">Your Company</div><div class="db-sub" id="dbSub">Freight cost estimate</div></div>
+          <div class="db-logo" id="dbLogo">Company logo<br>(set in admin)</div>
+        </div>
+        <div class="db-meta" id="dbMeta"></div>
+        <div class="db-parties">
+          <div><b id="dbSupLbl">Supplying entity</b><div id="dbSupplier">—</div><div class="db-addr" id="dbSupplierA"></div><div class="db-addr" id="dbSupplierC"></div></div>
+          <div><b id="dbBuyLbl">Buying entity</b><div id="dbBuyer">—</div><div class="db-addr" id="dbBuyerA"></div><div class="db-addr" id="dbBuyerC"></div></div>
+        </div>
+        <div class="db-summary" id="dbSummary"></div>
+        <div class="db-headline db-box">
+          <div class="db-big"><span id="dbLandedLbl">Total landed cost</span><span id="dbLanded">—</span> <span class="db-alt" id="dbLandedAlt"></span></div>
+          <div class="db-metrics" id="dbMetrics"></div>
+        </div>
+        <div class="db-cols">
+          <div class="db-box"><h3>Cost breakdown</h3><table id="dbBreak"></table></div>
+          <div>
+            <div class="db-box"><h3>Mode comparison</h3><table id="dbCompare"></table></div>
+            <div class="db-box"><h3>Procurement KPIs</h3><table id="dbKpi"></table></div>
+          </div>
+        </div>
+        <div class="db-foot" id="dbFoot"></div>
+      </div>
+    </div>
+
+  <div id="viewSaved" style="display:none">
+    <div class="card"><h2>Saved quotations</h2>
+      <div style="display:flex;gap:8px;margin-bottom:12px">
+        <button id="backupExport" class="newbtn">Export all (backup file)</button>
+        <button id="backupImport" class="newbtn">Import backup</button>
+        <input id="backupFile" type="file" accept="application/json" style="display:none">
+      </div>
+      <div id="savedList" class="saved-list"></div>
+      <div class="hint" id="savedNote" style="margin-top:10px"></div>
+    </div>
+  </div>
+
+  <div id="viewGuide" style="display:none"><div class="card">
+      <button class="newbtn" id="guideBack" style="margin-bottom:16px">← Back to calculator</button>
+      <h2>Guide &amp; glossary</h2>
+      <div class="hint" style="margin-bottom:14px">Read this once and the rest of the tool will make sense. It explains what every number means, how a landed cost is built, which figures are solid and which are estimates, and the values used behind the scenes.</div>
+
+      <div class="gsec">
+        <h3>What this tool is</h3>
+        <div class="hint">A landed-cost estimator for buyers without a transport management system. You enter your own freight rate and cargo, and it builds the full delivered cost &mdash; freight, insurance, customs duty, import VAT, and local charges &mdash; plus a mode comparison, carbon footprint, and a printable quotation. It is an <b>estimate to support a decision, not a binding quote</b>. Treat the output as a well-structured first number, then confirm freight and duty with your forwarder and customs broker.</div>
+      </div>
+
+      <div class="gsec">
+        <h3>How a landed-cost number is built (in order)</h3>
+        <dl>
+          <dt>1. Cargo</dt><dd>Every product row is summed into total weight and total volume.</dd>
+          <dt>2. Chargeable weight / volume</dt><dd>Converted to what carriers actually bill: air uses volumetric weight (volume in cm&sup3; &divide; 6000), sea LCL uses the revenue ton (the greater of cubic metres or tonnes), and sea FCL / road work out how many containers or trucks the cargo fills.</dd>
+          <dt>3. Freight</dt><dd>Chargeable amount &times; your rate, or the minimum charge if that is higher. For FCL/road it is number of units &times; rate.</dd>
+          <dt>4. Insurance</dt><dd>Goods value &times; your insurance % &times; 1.1 (the customary &ldquo;CIF + 10%&rdquo; basis).</dd>
+          <dt>5. Customs value (CIF)</dt><dd>Goods + freight + insurance. This is the value duty is charged on.</dd>
+          <dt>6. Duty</dt><dd>Each product&rsquo;s own duty % applied to its share of the customs value, then added up.</dd>
+          <dt>7. Import VAT / GST</dt><dd>Your VAT % applied to (customs value + duty).</dd>
+          <dt>8. Local charges</dt><dd>Origin and destination charges are added or excluded depending on the Incoterm.</dd>
+          <dt>9. Landed cost</dt><dd>The sum of the lines your Incoterm makes you responsible for. Lines the supplier covers are struck out and excluded.</dd>
+        </dl>
+      </div>
+
+      <div class="gsec">
+        <h3>How transit days are estimated</h3>
+        <p>With no schedule API connected, transit is estimated as <b>distance &divide; an effective daily pace + a fixed handling buffer</b>, floored at a sensible minimum. The pace is deliberately below top speed because it bakes in real-world limits (driver-hour rules, port dwell, waiting for the next flight); the buffer covers loading, terminal handling and customs at both ends.</p>
+        <dl>
+          <dt>Air <span class="gtag est">estimate</span></dt><dd>round(distance &divide; 4000) + 2 days, minimum 2. A 9,000 km lane &asymp; 4 days. The low pace reflects that air-freight time is dominated by handling and consolidation, not flight hours.</dd>
+          <dt>Sea <span class="gtag est">estimate</span></dt><dd>round(distance &divide; 700) + 6 days, minimum 5. A 19,000 km Asia&ndash;Europe lane &asymp; 33 days, in the usual 30&ndash;40 day range.</dd>
+          <dt>Road <span class="gtag est">estimate</span></dt><dd>round(distance &divide; 600) + 1 day, minimum 1. A 1,200 km lane &asymp; 3 days.</dd>
+        </dl>
+        <p>Typing a transit number yourself overrides the estimate and is treated as a real figure. Admin lane times (once the backend is connected) replace the formula with your own door-to-door times per route.</p>
+      </div>
+
+      <div class="gsec">
+        <h3>How the carbon footprint is calculated</h3>
+        <p><b>Manual mode (default, free):</b> emissions = cargo weight in tonnes &times; distance in km &times; a per-mode factor. The built-in factors are Air 0.6, Sea 0.016, Road 0.1 kg CO&#8322;e per tonne-km (DEFRA / GLEC aligned), and they are editable in Admin so you can drop in your own source.</p>
+        <p><b>EcoFreight mode (optional, needs backend):</b> when switched on in Admin and the Apps Script backend is connected with an API key, the app sends origin, destination, weight and mode to EcoFreight for GLEC v3.2 / ISO 14083 leg-by-leg emissions, and falls back to the manual factors if the service is unavailable or over its monthly free quota.</p>
+        <p>Either way the carbon number is an <span class="gtag est">estimate</span> &mdash; useful for comparing modes, not a measured figure.</p>
+      </div>
+
+      <div class="gsec">
+        <h3>Sea distance in nautical miles</h3>
+        <p>Sea distances are often quoted in nautical miles. In the Comparison tab&rsquo;s Sea card, the &ldquo;Have nautical miles?&rdquo; helper converts them for you (1 NM = 1.852 km) and fills the distance field in your current unit, which then feeds both the freight and the emissions calculation.</p>
+      </div>
+
+      <div class="gsec">
+        <h3>Genuine figures vs estimates</h3>
+        <div class="hint" style="margin-bottom:8px">This is the most important section. Use the genuine numbers with confidence; treat the estimates as planning figures to verify.</div>
+        <dl>
+          <dt>Genuine <span class="gtag real">from your input / definite</span></dt>
+          <dd>Goods value, duty %, VAT %, your freight rate, your min charge, origin/destination charges, insurance %, the Incoterm allocation rules, the CIF customs method, and all the arithmetic that combines them. If your inputs are right, these are right.</dd>
+          <dt>Estimated <span class="gtag est">modelled / will vary</span></dt>
+          <dd>Chargeable weight (depends on how the cargo is actually packed), the number of containers/trucks and the stacking fit (modelled from your dimensions and a packing-efficiency assumption), the carbon footprint (a generic factor &times; distance &times; weight), transit days (distance-based), and the FX rate (live, but it moves). The real carrier invoice can differ.</dd>
+        </dl>
+      </div>
+
+      <div class="gsec">
+        <h3>Glossary</h3>
+        <dl>
+          <dt>Chargeable weight</dt><dd>The figure a carrier bills on &mdash; the greater of actual weight and a volume-based weight, so light bulky cargo isn&rsquo;t under-charged.</dd>
+          <dt>Volumetric (dimensional) weight</dt><dd>Volume converted to a weight using a divisor; here 6000 cm&sup3;/kg for air.</dd>
+          <dt>Revenue ton (sea LCL)</dt><dd>Sea LCL is billed per the larger of cubic metres or tonnes (minimum 1).</dd>
+          <dt>LCL / FCL</dt><dd>Less-than-Container Load (you share a box) vs Full-Container Load (you book a whole container).</dd>
+          <dt>Stacking levels</dt><dd>How many layers of cargo can be stacked inside a container/truck (single/double/triple), which changes how much fits.</dd>
+          <dt>Packing efficiency</dt><dd>Real loads never fill 100% of a box; the tool assumes 85% usable space.</dd>
+          <dt>CIF</dt><dd>Cost, Insurance &amp; Freight &mdash; the value (goods + freight + insurance) that customs duty is calculated on.</dd>
+          <dt>Incoterm</dt><dd>The rule that splits costs and risk between supplier and buyer (e.g. EXW, FOB, CIF, DDP). It decides which lines you actually pay.</dd>
+          <dt>Duty</dt><dd>Import tax set by the destination country, based on the product&rsquo;s HS code, applied to the customs value.</dd>
+          <dt>Import VAT / GST</dt><dd>Consumption tax charged on (customs value + duty) at import.</dd>
+          <dt>Carbon footprint (CO&#8322;e)</dt><dd>Estimated transport emissions: weight &times; distance &times; a per-mode factor.</dd>
+          <dt>Landed cost</dt><dd>The total delivered cost of getting the goods to your door under the chosen Incoterm.</dd>
+          <dt>Logistics uplift</dt><dd>How much the landed cost exceeds the bare goods value, as a %.</dd>
+        </dl>
+      </div>
+
+      <div class="gsec">
+        <h3>Values used in the engine</h3>
+        <div class="hint" style="margin-bottom:8px">Defaults below; the ones marked editable can be changed in Admin (&#9776;, top-left).</div>
+        <dl>
+          <dt>Air volumetric divisor</dt><dd>6000 cm&sup3; per kg.</dd>
+          <dt>Sea LCL revenue ton</dt><dd>max(cubic metres, tonnes), minimum 1.</dd>
+          <dt>CO&#8322; factors <span class="gtag est">editable</span></dt><dd>Air 0.6, Sea 0.016, Road 0.1 kg CO&#8322;e per tonne-km (DEFRA / GLEC aligned). Air is far higher than sea by design.</dd>
+          <dt>Insurance basis</dt><dd>value &times; insurance % &times; 1.1 (CIF + 10%).</dd>
+          <dt>Duty &amp; VAT</dt><dd>Duty on the CIF customs value, per product; VAT on (customs value + duty).</dd>
+          <dt>Packing efficiency <span class="gtag est">editable soon</span></dt><dd>85% of internal volume usable; stacked layers capped by the tallest item&rsquo;s height.</dd>
+          <dt>Container internals (L&times;W&times;H cm / payload kg) <span class="gtag est">editable soon</span></dt><dd>20&rsquo;GP 589&middot;234&middot;239 / 28200; 40&rsquo;GP 1203&middot;234&middot;239 / 28800; 40&rsquo;HC 1203&middot;234&middot;269 / 28600; 45&rsquo;HC 1355&middot;234&middot;269 / 27700.</dd>
+          <dt>Truck internals <span class="gtag est">editable soon</span></dt><dd>From small van up to 13.6 m semi-trailer and mega-trailer.</dd>
+          <dt>Transit estimate <span class="gtag est">editable soon</span></dt><dd>Rough, distance-based per mode; replaced by your real lane times once the Transit table is set in Admin.</dd>
+          <dt>FX</dt><dd>Live daily ECB reference rate, with a manual override.</dd>
+        </dl>
+      </div>
+    </div></div>
+  <div class="appfoot">Designed &amp; built by <b>Tushar Jejurkar</b> </div>
+</div>
+
+<script>
+const $=id=>document.getElementById(id);
+const state={units:'metric',mode:'sea',sea:'lcl',view:'estimator',stack:1};
+const INCOTERM={EXW:{o:1,f:1,i:1,d:1,t:1},FCA:{o:0,f:1,i:1,d:1,t:1},FOB:{o:0,f:1,i:1,d:1,t:1},CFR:{o:0,f:0,i:1,d:1,t:1},CIF:{o:0,f:0,i:0,d:1,t:1},CPT:{o:0,f:0,i:1,d:1,t:1},CIP:{o:0,f:0,i:0,d:1,t:1},DAP:{o:0,f:0,i:0,d:1,t:1},DPU:{o:0,f:0,i:0,d:1,t:1},DDP:{o:0,f:0,i:0,d:0,t:0}};
+const SEA_ONLY=['FOB','FAS','CFR','CIF'];
+const CO2F={air:0.6,sea:0.016,road:0.1};  // kg CO2e per tonne-km (DEFRA/GLEC aligned)
+const RATE={air:'',sea:'85',road:''};
+const DIST={air:'',sea:'',road:''};
+let LOGO='';
+let DISCLAIMER='Estimate only — not a binding quote. Freight rate is entered by the user. Duty is on the CIF customs value; import VAT on value plus duty.';
+let USERS=['Alex Morgan','Priya Shah','Sam Lee','Jordan Diaz'];
+let QUOTEPREFIX='Q-';
+let VIS={transit:true,carbon:true};
+let CARBONMODE='manual';
+let DRAFT_DISMISS={};
+let SEADUNIT='km';
+let SAVES=[];let LOADED=null;let CURVER=1;
+function rawDist(m){const d=parseFloat(DIST[m]);return (d&&d>0)?d:(parseFloat($('distance').value)||0);}
+function updateDistUnit(){var seg=$('seaUnitSeg');if(seg)seg.style.display=(state.mode==='sea')?'inline-flex':'none';var dl=$('distUnitLbl');if(dl)dl.textContent=(state.mode==='sea')?(SEADUNIT==='nm'?'NM':'km'):'km';}
+function setSeaUnit(u){SEADUNIT=u;document.querySelectorAll('[data-su]').forEach(function(b){b.classList.toggle('on',b.dataset.su===u);});document.querySelectorAll('.seaUnitLbl').forEach(function(e){e.textContent=u==='nm'?'NM':'km';});updateDistUnit();compute();}
+function distKmFor(m){if(m==='sea')return rawDist(m)*(SEADUNIT==='nm'?1.852:1);return rawDist(m);}
+function co2kg(totalWkg,mode){return (totalWkg/1000)*distKmFor(mode)*(CO2F[mode]||0);}
+function co2fmt(kg){return kg<1000?Math.round(kg)+' kg CO₂e':(kg/1000).toFixed(1)+' t CO₂e';}
+function transitLane(m){
+  if(typeof TRANSIT_LANES==='undefined'||!TRANSIT_LANES||!TRANSIT_LANES.length)return null;
+  var o=($('origin')?$('origin').value:'').trim().toLowerCase(), d=($('dest')?$('dest').value:'').trim().toLowerCase();
+  if(!o||!d)return null;
+  for(var i=0;i<TRANSIT_LANES.length;i++){var L=TRANSIT_LANES[i];
+    if(L.mode===m&&String(L.origin).trim().toLowerCase()===o&&String(L.dest).trim().toLowerCase()===d&&L.days>0)return L.days;}
+  return null;
+}
+function transitEst(m){const lane=transitLane(m);if(lane)return lane;const d=distKmFor(m);if(m==='air')return Math.max(Math.round(d/4000)+2,2);if(m==='sea')return Math.max(Math.round(d/700)+6,5);return Math.max(Math.round(d/600)+1,1);}
+function num(id){const v=parseFloat($(id).value);return isNaN(v)?0:v;}
+function fmt(v,c){return new Intl.NumberFormat('en-US',{style:'currency',currency:c,maximumFractionDigits:0}).format(v);}
+function fmtNum(x){return String(Math.round(x*1000)/1000);}
+function uf(t){return state.units==='imperial'?(t==='w'?0.453592:2.54):1;}
+function incotermText(code){const g=INCOTERM[code],pays=[t('product')],seller=[];(g.o?pays:seller).push(t('origin/export'));(g.f?pays:seller).push(t('freight'));(g.i?pays:seller).push(t('insurance'));(g.d?pays:seller).push(t('destination'));(g.t?pays:seller).push(t('duty & tax'));let s=t('Under')+' '+code+', '+t('you pay:')+' '+pays.join(', ')+'.';if(seller.length)s+=' '+t('Supplier covers:')+' '+seller.join(', ')+'.';return s+' '+t('Struck-through lines below are the supplier’s.');}
+function chargeableNote(){
+  if(state.mode==='air')return t('Chargeable = the greater of actual weight or volumetric weight (volume × 1,000,000 ÷ 6000). Your per-kg rate is applied to it.');
+  if(state.mode==='sea'&&state.sea==='lcl')return t('Chargeable = revenue ton: the greater of volume (CBM) or weight (tonnes), minimum 1. Your per-CBM rate is applied to it.');
+  if(state.mode==='sea'&&state.sea==='fcl')return t('Chargeable = containers needed, from how your items stack into the selected container (limited by volume, weight and stacking).');
+  return t('Chargeable = trucks needed, from how your items stack into the selected truck body; freight = trucks × distance × your per-distance rate.');
+}
+function setStack(s){state.stack=s;document.querySelectorAll('#stackSeg button').forEach(b=>b.classList.toggle('on',(+b.dataset.s)===s));compute();}
+function setupUnit(el,t){el.dataset.t=t;el.dataset.m=String((parseFloat(el.value)||0)*uf(t));el.addEventListener('input',()=>{el.dataset.m=String((parseFloat(el.value)||0)*uf(t));compute();});}
+function mval(el){return parseFloat(el.dataset.m)||0;}
+
+function newRow(p={}){
+  const uw=state.units==='imperial'?'lb':'kg', ul=state.units==='imperial'?'in':'cm';
+  const d=document.createElement('div');d.className='prow';
+  d.innerHTML=`<div class="prow-top">
+      <input class="p-name" placeholder="Product name / description" value="${p.name||''}">
+      <input class="p-hs" placeholder="HS code" value="${p.hs||''}">
+      <button class="p-del" title="Remove">×</button></div>
+    <div class="prow-bot">
+      <span class="pl">Qty</span><span class="pl">Wt (<span class="u-w">${uw}</span>)</span><span class="pl">L (<span class="u-l">${ul}</span>)</span><span class="pl">W (<span class="u-l">${ul}</span>)</span><span class="pl">H (<span class="u-l">${ul}</span>)</span><span class="pl">Unit value (<span class="curLbl">USD</span>)</span><span class="pl">Duty %</span>
+      <input class="p-qty num" value="${p.qty||''}"><input class="p-wt num" value="${p.wt||''}"><input class="p-l num" value="${p.l||''}"><input class="p-w num" value="${p.w||''}"><input class="p-h num" value="${p.h||''}"><input class="p-val num" value="${p.val||''}"><input class="p-duty num" value="${p.duty||''}">
+    </div>`;
+  d.querySelector('.p-del').onclick=()=>{d.remove();compute();};
+  d.querySelectorAll('.p-qty,.p-val,.p-name,.p-hs,.p-duty').forEach(i=>i.addEventListener('input',compute));
+  setupUnit(d.querySelector('.p-wt'),'w');['.p-l','.p-w','.p-h'].forEach(s=>setupUnit(d.querySelector(s),'l'));
+  return d;
+}
+function addProduct(p){$('prows').appendChild(newRow(p));compute();}
+
+function updateBasisLabel(){$('optKm').textContent=t('per km');}
+function setMode(m){state.mode=m;document.querySelectorAll('#modeSeg button').forEach(b=>b.classList.toggle('on',b.dataset.mode===m));$('seaServiceRow').style.display=m==='sea'?'':'none';$('fclRow').style.display=(m==='sea'&&state.sea==='fcl')?'':'none';$('truckRow').style.display=m==='road'?'':'none';$('stackRow').style.display=(m==='road'||(m==='sea'&&state.sea==='fcl'))?'':'none';$('rateBasis').value=m==='air'?'kg':m==='road'?'km':(state.sea==='fcl'?'container':'cbm');$('rate').value=RATE[m]||'';updateDistUnit();compute();}
+function setSea(s){state.sea=s;document.querySelectorAll('#seaSeg button').forEach(b=>b.classList.toggle('on',b.dataset.sea===s));document.querySelectorAll('.cmp-sea').forEach(b=>b.classList.toggle('on',b.dataset.sea===s));$('fclRow').style.display=s==='fcl'?'':'none';$('stackRow').style.display=s==='fcl'?'':'none';$('rateBasis').value=s==='fcl'?'container':'cbm';updateCmpLabels();compute();}
+function switchUnits(target){
+  if(target===state.units)return;
+  const toImp=target==='imperial';
+  document.querySelectorAll('[data-t]').forEach(el=>{const m=mval(el);el.value=fmtNum(m/(target==='imperial'?(el.dataset.t==='w'?0.453592:2.54):1));});
+  state.units=target;
+  document.querySelectorAll('[data-units]').forEach(x=>x.classList.toggle('on',x.dataset.units===target));
+  document.querySelectorAll('.u-w').forEach(e=>e.textContent=toImp?'lb':'kg');
+  document.querySelectorAll('.u-l').forEach(e=>e.textContent=toImp?'in':'cm');
+  document.querySelectorAll('.u-d').forEach(e=>e.textContent='km');
+  updateDistUnit(); updateBasisLabel(); updateCmpLabels(); compute();
+}
+
+// ---- shared engine ----
+function aggregate(){
+  let units=0,totalWkg=0,looseVol=0,cargo=0,maxH=0;const items=[];
+  document.querySelectorAll('.prow').forEach(r=>{
+    const q=parseFloat(r.querySelector('.p-qty').value)||0, w=mval(r.querySelector('.p-wt'));
+    const l=mval(r.querySelector('.p-l')), ww=mval(r.querySelector('.p-w')), h=mval(r.querySelector('.p-h'));
+    const uv=parseFloat(r.querySelector('.p-val').value)||0, dp=parseFloat(r.querySelector('.p-duty').value)||0;
+    const pv=q*uv; units+=q; totalWkg+=q*w; looseVol+=q*(l/100)*(ww/100)*(h/100); cargo+=pv; if(q>0&&h>maxH)maxH=h; items.push({pv,dp});
+  });
+  const [palL,palW]=$('pallet').value.split('|').map(Number);
+  const palHcm=mval($('palletH'));
+  const palletVol=(palL/100)*(palW/100)*(palHcm/100);
+  let pallets=num('palletsOv'),palAuto=false;
+  if(pallets<=0){pallets=palletVol>0?Math.max(Math.ceil(looseVol/palletVol),1):1;palAuto=true;}
+  return {units,totalWkg,looseVol,cargo,items,maxH,avgUnitVol:units>0?looseVol/units:0,pallets,palAuto,palletVol,shipVol:pallets*palletVol};
+}
+const PACK=0.85; // stowage/packing efficiency (gaps between items)
+function loadFit(dims,S,a){
+  const cL=dims[0],cW=dims[1],cH=dims[2],pay=dims[3];
+  const floorA=(cL/100)*(cW/100);            // m2
+  const layerH=Math.max(a.maxH,1);           // cm (tallest item defines a layer)
+  const maxLayersH=Math.floor(cH/layerH);    // layers that fit by height
+  const layers=Math.min(S,Math.max(maxLayersH,0));
+  const usableVol=floorA*(layers*layerH/100)*PACK; // m3 actually usable
+  const byVol=usableVol>0?Math.ceil(a.looseVol/usableVol):1;
+  const byWt=pay>0?Math.ceil(a.totalWkg/pay):1;
+  const n=Math.max(byVol,byWt,1);
+  const util=(n>0&&usableVol>0)?(a.looseVol/(n*usableVol))*100:0;
+  return {n,layers,maxLayersH,usableVol,util,fits:maxLayersH>=1,perUnit:(usableVol>0&&a.avgUnitVol>0)?Math.floor(usableVol/a.avgUnitVol):0};
+}
+function modeFreight(spec,rate,a){
+  let freight=0,chargeLabel='',util=null,fit=null;
+  const S=state.stack||1;
+  if(spec.mode==='air'){const ch=Math.max(a.totalWkg,a.shipVol*1000000/6000);chargeLabel=`${ch.toFixed(0)} kg`;freight=ch*rate;}
+  else if(spec.mode==='sea'&&spec.sea==='lcl'){let rt=Math.max(a.shipVol,a.totalWkg/1000,1);chargeLabel=`${rt.toFixed(1)} R/T`;freight=rt*rate;}
+  else if(spec.mode==='sea'&&spec.sea==='fcl'){fit=loadFit($('container').value.split('|').map(Number),S,a);util=fit.util;chargeLabel=fit.fits?`${fit.n} × ${t('cont')} · ${fit.layers}-${t('high')}`:t('items too tall');freight=fit.n*rate;}
+  else if(spec.mode==='road'){fit=loadFit($('truck').value.split('|').map(Number),S,a);const dist=rawDist('road');util=fit.util;chargeLabel=fit.fits?`${fit.n} ${t('truck(s)')} × ${dist.toFixed(0)} km · ${fit.layers}-${t('high')}`:t('items too tall');freight=fit.n*dist*rate;}
+  return {freight,chargeLabel,util,fit};
+}
+function landedFor(freight,a){
+  const insurance=a.cargo*(num('insPct')/100)*1.1;
+  const originChg=num('originChg'),destChg=num('destChg');
+  const customs=a.cargo+freight+insurance;
+  let duty=0;a.items.forEach(it=>{const sh=a.cargo>0?it.pv/a.cargo:0;duty+=(it.pv+freight*sh+insurance*sh)*(it.dp/100);});
+  const vat=(customs+duty)*(num('vatPct')/100);
+  const g=INCOTERM[$('incoterm').value];
+  const landed=a.cargo+(g.o?originChg:0)+(g.f?freight:0)+(g.i?insurance:0)+(g.d?destChg:0)+(g.t?(duty+vat):0);
+  return {insurance,originChg,destChg,customs,duty,vat,g,landed,perUnit:a.units>0?landed/a.units:0};
+}
+
+function compute(){
+  const a=aggregate(); const base=$('curBase').value, rep=$('curRep').value, fx=num('fxRate');
+  $('cargoValue').value=a.cargo.toFixed(0);
+  $('packLine').innerHTML=`= <b>${a.pallets}</b> ${t('pallet(s)')}${a.palAuto?' '+t('(auto)'):''} · <b>${a.shipVol.toFixed(1)}</b> CBM · <b>${a.totalWkg.toFixed(0)}</b> kg · ${a.units} ${t('units')}`;
+
+  let mf=modeFreight({mode:state.mode,sea:state.sea},num('rate'),a);
+  let freight=mf.freight,minApplied=false; const minC=num('minCharge');
+  if(minC>0&&freight<minC){freight=minC;minApplied=true;}
+  if($('ovFreightChk').checked){const o=parseFloat($('ovFreight').value);if(!isNaN(o))freight=o;}
+  const lf=landedFor(freight,a), g=lf.g;
+
+  document.querySelectorAll('.curLbl').forEach(e=>e.textContent=base);
+  $('landed').textContent=fmt(lf.landed,base);
+  $('landedAlt').textContent=(rep!=='(none)'&&fx>0)?'≈ '+fmt(lf.landed*fx,rep):'';
+  $('landedSub').textContent=`${fmt(lf.perUnit,base)} / ${t('unit')} · ${a.units} ${t('units')}`;
+  $('mFreight').textContent=fmt(freight,base)+(minApplied?' *':'');
+  $('mCo2').textContent=co2fmt(co2kg(a.totalWkg,state.mode));
+  $('chargeNote').textContent=t('Chargeable')+': '+mf.chargeLabel+'. '+chargeableNote()+((mf.fit&&mf.fit.fits)?(' ≈'+mf.fit.perUnit+' '+t('units per')+' '+t(state.mode==='road'?'truck':'container')+' '+t('at')+' '+mf.fit.layers+'-'+t('high')+'; '+mf.fit.n+' '+t('needed')+'.'):'');
+  $('icoNote').textContent=incotermText($('incoterm').value);
+
+  const iw=$('icoWarn'),code=$('incoterm').value;
+  if((state.mode==='air'||state.mode==='road')&&SEA_ONLY.includes(code)){iw.style.display='flex';iw.innerHTML='<span>⚠</span><span>'+tf('%s applies to sea / inland-waterway only. For %s, use FCA, CPT, CIP, DAP, or DDP.',code,modeWord(state.mode))+'</span>';}else iw.style.display='none';
+
+  const ovTag=$('ovFreightChk').checked?'<span class="tag">'+t('edited')+'</span>':'';
+  const line=(l,v,on,tag='')=>`<div class="li ${on?'':'off'}"><span>${l}${on?tag:' ('+t('supplier')+')'}</span><span class="rt num">${fmt(v,base)}</span></div>`;
+  $('breakdown').innerHTML=line(t('Product cost'),a.cargo,true)+line(t('Origin charges'),lf.originChg,g.o)+line(t('Freight'),freight,g.f,ovTag)+line(t('Insurance'),lf.insurance,g.i)+line(t('Destination'),lf.destChg,g.d)+line(t('Duty (per product)'),lf.duty,g.t)+line(t('VAT / GST'),lf.vat,g.t)+`<div class="li total"><span>${t('Total landed (your cost)')}</span><span class="rt num">${fmt(lf.landed,base)}</span></div>`;
+
+  const w=[];
+  if(mf.util!==null&&mf.util<30&&state.mode==='sea')w.push(tf('Container only %s% full — LCL is likely cheaper at this volume.',mf.util.toFixed(0)));
+  if(mf.fit&&!mf.fit.fits)w.push(tf('Items are taller than the selected %s — they will not fit. Choose a taller body or reduce item height.',t(state.mode==='road'?'truck':'container')));
+  else if(mf.fit&&mf.fit.maxLayersH<state.stack)w.push(tf('Selected %s height allows only %s layer(s); %s-stacking will not fully fit.',t(state.mode==='road'?'truck':'container'),mf.fit.maxLayersH,t(state.stack===2?'double':'triple')));
+  if(minApplied)w.push(t('Minimum charge applied.'));
+  if(code==='DDP')w.push(t('DDP — supplier covers duty & tax, so they\'re excluded from your cost.'));
+  $('warnings').innerHTML=w.map(t=>`<div class="warn"><span>⚠</span><span>${t}</span></div>`).join('');
+
+  renderComparison(a);
+  renderDashboard(a);
+}
+
+function updateCmpLabels(){
+  const cur=$('curBase')?$('curBase').value:'USD';
+  const km='km';
+  const setL=(m,txt)=>{const el=document.querySelector('.cmp-rl[data-m="'+m+'"]');if(el)el.innerHTML=txt;};
+  setL('air',`${t('Rate (')}<span class="curLbl">${cur}</span> ${t('per kg)')}`);
+  setL('sea',`${t('Rate (')}<span class="curLbl">${cur}</span> ${t(state.sea==='lcl'?'per CBM)':'per container)')}`);
+  setL('road',`${t('Rate (')}<span class="curLbl">${cur}</span> ${t('per km)')}`);
+}
+function renderComparison(a){
+  if(!a)a=aggregate();
+  const base=$('curBase').value, minC=num('minCharge');
+  let best=null,bestCost=Infinity;
+  ['air','sea','road'].forEach(m=>{
+    const on=document.querySelector('.cmp-on[data-m="'+m+'"]').checked;
+    const card=$('cmp-'+m), out=$('out-'+m);
+    card.classList.remove('rec'); const eb=card.querySelector('.recbadge'); if(eb)eb.remove();
+    card.classList.toggle('excl',!on);
+    if(!on){out.innerHTML='<div class="muted">'+t('Excluded for this route')+'</div>';return;}
+    const rate=parseFloat(document.querySelector('.cmp-rate[data-m="'+m+'"]').value)||0;
+    const tr=document.querySelector('.cmp-tr[data-m="'+m+'"]').value;
+    const trShow=tr?`${tr} ${t('days')}`:`~${transitEst(m)} ${t('days')} ${t('(est.)')}`;
+    const co2Show=co2fmt(co2kg(a.totalWkg,m));
+    const envLines=(VIS.transit?`<div class="ln"><span>${t('Transit')}</span><span>${trShow}</span></div>`:'')+(VIS.carbon?`<div class="ln"><span>${t('Carbon footprint')}</span><span>${co2Show}</span></div>`:'');
+    if(rate<=0){out.innerHTML='<div class="muted" style="padding-top:8px">'+t('Enter a rate for cost')+'</div>'+envLines;return;}
+    const spec={mode:m,sea:m==='sea'?state.sea:null};
+    let mf=modeFreight(spec,rate,a); let freight=mf.freight; if(minC>0&&freight<minC)freight=minC;
+    const lf=landedFor(freight,a);
+    out.innerHTML=`<div class="big num">${fmt(lf.landed,base)}</div><div style="font-size:12px;color:var(--muted);margin-bottom:6px">${fmt(lf.perUnit,base)} / ${t('unit')}</div>
+      <div class="ln"><span>${t('Freight')}</span><span class="num">${fmt(freight,base)}</span></div>
+      <div class="ln"><span>${t('Chargeable')}</span><span>${mf.chargeLabel}</span></div>`+envLines;
+    if(lf.landed<bestCost){bestCost=lf.landed;best=m;}
+  });
+  if(best){const c=$('cmp-'+best);c.classList.add('rec');const b=document.createElement('span');b.className='recbadge';b.textContent=t('Cheapest');c.prepend(b);}
+}
+
+function modeSummary(m,a){
+  const on=document.querySelector('.cmp-on[data-m="'+m+'"]').checked;
+  if(!on)return {m,excluded:true};
+  const rate=parseFloat(document.querySelector('.cmp-rate[data-m="'+m+'"]').value)||0;
+  const trIn=document.querySelector('.cmp-tr[data-m="'+m+'"]').value;
+  const tr=trIn?trIn+' '+t('days'):'~'+transitEst(m)+' '+t('days');
+  const co2=co2fmt(co2kg(a.totalWkg,m));
+  if(rate<=0)return {m,rate:0,tr,co2};
+  let mf=modeFreight({mode:m,sea:m==='sea'?state.sea:null},rate,a);let f=mf.freight;const minC=num('minCharge');if(minC>0&&f<minC)f=minC;
+  const lf=landedFor(f,a);
+  return {m,rate,landed:lf.landed,perUnit:lf.perUnit,tr,co2};
+}
+function renderDashboard(a){
+  if(!$('viewDashboard'))return; if(!a)a=aggregate();
+  const base=$('curBase').value, rep=$('curRep').value, fx=num('fxRate');
+  let mf=modeFreight({mode:state.mode,sea:state.sea},num('rate'),a);
+  let freight=mf.freight;const minC=num('minCharge');if(minC>0&&freight<minC)freight=minC;
+  if($('ovFreightChk').checked){const o=parseFloat($('ovFreight').value);if(!isNaN(o))freight=o;}
+  const lf=landedFor(freight,a),g=lf.g;
+  const modeName=state.mode==='air'?t('Air'):state.mode==='road'?t('Road'):(t('Sea')+' \u00b7 '+state.sea.toUpperCase());
+  const tEl=document.querySelector('.cmp-tr[data-m="'+state.mode+'"]'); const trIn=tEl?tEl.value:'';
+  const trShow=trIn?trIn+' '+t('days'):'~'+transitEst(state.mode)+' '+t('days')+' '+t('(est.)');
+  const altStr=(rep!=='(none)'&&fx>0)?'\u2248 '+fmt(lf.landed*fx,rep):'';
+  const uplift=a.cargo>0?((lf.landed-a.cargo)/a.cargo*100):0;
+  const co2self=co2fmt(co2kg(a.totalWkg,state.mode));
+  const sums=['air','sea','road'].map(m=>modeSummary(m,a));
+
+  // overview KPIs
+  const INFO={'Total landed cost':'Total delivered cost under your Incoterm: goods + freight + insurance + duty + import VAT + any local charges you are responsible for.','Cost per unit':'Landed cost divided by total units, to compare against your target buy price.','Logistics uplift':'How much the landed cost exceeds the bare goods value, as a percentage.','Freight':'Estimated freight: chargeable amount times your rate (or minimum charge, or containers/trucks times rate).','Duty + tax':'Import duty on the CIF customs value (per product) plus import VAT or GST on value-plus-duty.','Carbon footprint':'Estimated transport emissions: weight times distance times a per-mode CO2 factor. A planning estimate, not a measured figure.','Transit':'Rough door-to-door transit time estimated from distance. Replace with real lane times once set.'};
+  const kpi=(l,v,sub,hl)=>`<div class="kpi${hl?' hl':''}"><div class="l">${t(l)}${INFO[l]?`<i class="infodot" data-tip="${INFO[l]}">i</i>`:''}</div><div class="v">${v}</div>${sub?`<div class="s">${sub}</div>`:''}</div>`;
+  $('kpiGrid').innerHTML=
+    kpi('Total landed cost',fmt(lf.landed,base),altStr,true)+
+    kpi('Cost per unit',fmt(lf.perUnit,base),a.units+' '+t('units'))+
+    kpi('Logistics uplift',uplift.toFixed(1)+'%',t('over goods value'))+
+    kpi('Freight',fmt(freight,base),mf.chargeLabel)+
+    kpi('Duty + tax',fmt(lf.duty+lf.vat,base),'')+
+    (VIS.carbon?kpi('Carbon footprint',co2self,modeName):'')+
+    (VIS.transit?kpi('Transit',trShow,modeName):'');
+
+  // composition bars
+  const comp=[['Product cost',a.cargo,true],['Origin charges',lf.originChg,g.o],['Freight',freight,g.f],['Insurance',lf.insurance,g.i],['Destination',lf.destChg,g.d],['Duty',lf.duty,g.t],['VAT / GST',lf.vat,g.t]];
+  const maxc=Math.max.apply(null,comp.map(c=>c[1]).concat([1]));
+  $('ovComposition').innerHTML=comp.map(c=>`<div class="comp-row" style="${c[2]?'':'opacity:.45'}"><div class="t"><span>${t(c[0])}${c[2]?'':' ('+t('supplier')+')'}</span><span class="rt">${fmt(c[1],base)}</span></div><div class="bar"><span style="width:${(c[1]/maxc*100).toFixed(0)}%"></span></div></div>`).join('');
+
+  // mode comparison bars
+  const rated=sums.filter(x=>!x.excluded&&x.rate).map(x=>x.landed);
+  const maxL=Math.max.apply(null,rated.concat([1]));
+  let best=null,bc=Infinity;sums.forEach(x=>{if(!x.excluded&&x.rate&&x.landed<bc){bc=x.landed;best=x.m;}});
+  $('ovModes').innerHTML=sums.map(su=>{
+    const nm=su.m==='sea'?(t('Sea')+' \u00b7 '+state.sea.toUpperCase()):t(su.m[0].toUpperCase()+su.m.slice(1));
+    if(su.excluded)return `<div class="mode-row" style="opacity:.4"><div class="t"><b>${nm}</b><span>${t('excluded')}</span></div></div>`;
+    if(!su.rate)return `<div class="mode-row"><div class="t"><b>${nm}</b><span class="meta">${su.tr} \u00b7 ${su.co2}</span></div><div class="mode-bar"></div><div class="meta">${t('enter a rate for cost')}</div></div>`;
+    const isB=su.m===best;
+    return `<div class="mode-row"><div class="t"><b>${nm}${isB?' \u00b7 '+t('cheapest'):''}</b><span class="rt" style="font-family:'IBM Plex Mono',monospace">${fmt(su.landed,base)}</span></div><div class="mode-bar${isB?' best':''}"><span style="width:${(su.landed/maxL*100).toFixed(0)}%"></span></div><div class="meta">${su.tr} \u00b7 ${su.co2}</div></div>`;
+  }).join('');
+
+  // quote (A4)
+  $('dbCompany2').textContent=$('dbCompany').value||t('Your Company');
+  const dval=$('dbDate').value, dShow=dval?new Date(dval).toLocaleDateString():new Date().toLocaleDateString();
+  let meta=t('Quote:')+' '+($('dbQuoteNo').value||'\u2014')+(CURVER>1?(' v'+CURVER):'')+(($('quoteName').value)?(' \u00b7 '+$('quoteName').value):'')+' \u00b7 '+t('Date:')+' '+dShow+' \u00b7 '+t('Prepared by:')+' '+($('dbPrep').value||'\u2014');
+  if($('dbValid').value)meta+=' \u00b7 '+t('Valid until:')+' '+new Date($('dbValid').value).toLocaleDateString();
+  $('dbMeta').textContent=meta;
+  if($('dashWho')){const qn=$('dbQuoteNo').value;const who=LOADED?('<b>'+LOADED.label+(CURVER>1?(' v'+CURVER):'')+'</b>'):(qn?('<b>'+qn+'</b> ('+t('unsaved')+')'):'<b>'+t('Unsaved estimate')+'</b>');const pb=$('dbPrep').value;$('dashWho').innerHTML=t('Showing:')+' '+who+(pb?(' · '+t('prepared by')+' '+pb):'')+' · '+new Date().toLocaleDateString();}
+  if($('dbSub'))$('dbSub').textContent=t('Freight cost estimate');
+  if($('dbSupLbl'))$('dbSupLbl').textContent=t('Supplying entity');
+  if($('dbBuyLbl'))$('dbBuyLbl').textContent=t('Buying entity');
+  if($('dbLandedLbl'))$('dbLandedLbl').textContent=t('Total landed cost');
+  $('dbSupplier').textContent=$('shipName').value||'\u2014';$('dbSupplierA').textContent=$('shipAddr').value||'';$('dbSupplierC').textContent=[$('shipContact').value,$('shipPhone').value,$('shipEmail').value].filter(Boolean).join(' · ');
+  $('dbBuyer').textContent=$('consName').value||'\u2014';$('dbBuyerA').textContent=$('consAddr').value||'';$('dbBuyerC').textContent=[$('consContact').value,$('consPhone').value,$('consEmail').value].filter(Boolean).join(' · ');
+  $('dbSummary').innerHTML=`<span>${t('Route:')} <b>${($('origin').value||'\u2014')} \u2192 ${($('dest').value||'\u2014')}</b></span><span>${t('Mode:')} <b>${t(modeName)}</b></span><span>Incoterm: <b>${$('incoterm').value}</b></span><span>${t('Units:')} <b>${a.units}</b></span><span>${t('Weight:')} <b>${a.totalWkg.toFixed(0)} kg</b></span><span>${t('Volume:')} <b>${a.shipVol.toFixed(1)} CBM</b></span>`;
+  $('dbLanded').textContent=fmt(lf.landed,base);
+  $('dbLandedAlt').textContent=altStr;
+  $('dbMetrics').innerHTML=`<div>${t('Cost per unit')}<b>${fmt(lf.perUnit,base)}</b></div>`+(VIS.transit?`<div>${t('Transit')}<b>${trShow}</b></div>`:'')+(VIS.carbon?`<div>${t('Carbon footprint')}<b>${co2self}</b></div>`:'');
+  const r=(l,v,on)=>`<tr style="${on?'':'opacity:.5'}"><td>${l}${on?'':' (supplier)'}</td><td>${fmt(v,base)}</td></tr>`;
+  $('dbBreak').innerHTML=r(t('Product cost'),a.cargo,true)+r(t('Origin charges'),lf.originChg,g.o)+r(t('Freight'),freight,g.f)+r(t('Insurance'),lf.insurance,g.i)+r(t('Destination'),lf.destChg,g.d)+r(t('Duty'),lf.duty,g.t)+r(t('VAT / GST'),lf.vat,g.t)+`<tr style="font-weight:600"><td>${t('Total landed')}</td><td>${fmt(lf.landed,base)}</td></tr>`;
+  let ct='';sums.forEach(su=>{const nm=su.m==='sea'?(t('Sea')+'\u00b7'+state.sea.toUpperCase()):t(su.m[0].toUpperCase()+su.m.slice(1));if(su.excluded){ct+=`<tr style="opacity:.45"><td>${nm}</td><td>${t('excluded')}</td></tr>`;return;}ct+=`<tr><td>${nm}<br><span style="color:var(--faint)">${su.tr} \u00b7 ${su.co2}</span></td><td>${su.rate?fmt(su.landed,base):'\u2014'}</td></tr>`;});
+  $('dbCompare').innerHTML=ct;
+  $('dbKpi').innerHTML=`<tr><td>${t('Logistics uplift over goods')}</td><td>${uplift.toFixed(1)}%</td></tr><tr><td>${t('Duty + tax')}</td><td>${fmt(lf.duty+lf.vat,base)}</td></tr><tr><td>${t('Freight')}</td><td>${fmt(freight,base)}</td></tr>`;
+  $('dbFoot').textContent=DISCLAIMER+' '+t('FX')+': 1 '+base+' = '+fx+(rep!=='(none)'?(' '+rep):'')+'. '+t('Generated')+' '+new Date().toLocaleDateString()+'.';
+}
+function openAdmin(){$('drawerOv').style.display='block';$('adminDrawer').classList.add('open');}
+function closeAdmin(){$('drawerOv').style.display='none';$('adminDrawer').classList.remove('open');}
+function applyLogo(){const img=LOGO?('<img src="'+LOGO+'" alt="logo">'):'';if($('headerLogo'))$('headerLogo').innerHTML=LOGO?img:'<span>Company logo<br>(set in admin)</span>';if($('dbLogo'))$('dbLogo').innerHTML=LOGO?img:'Company logo<br>(set in admin)';if($('adminLogoPrev'))$('adminLogoPrev').innerHTML=LOGO?img:'<span class="hint">No logo uploaded</span>';}
+function onLogoFile(e){const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=ev=>{const im=new Image();im.onload=()=>{const c=document.createElement('canvas');const w=Math.min(im.width,250),h=im.height*(w/im.width);c.width=w;c.height=h;c.getContext('2d').drawImage(im,0,0,w,h);LOGO=c.toDataURL('image/png');applyLogo();};im.src=ev.target.result;};r.readAsDataURL(f);}
+function rebuildPrep(){const sel=$('dbPrep');if(!sel)return;const cur=sel.value;sel.innerHTML='<option value="">— select —</option>'+USERS.map(n=>'<option>'+n+'</option>').join('');sel.value=cur;}
+function escH(x){return String(x).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});}
+function renderUsers(){const list=$('adminUsers');if(!list)return;
+  if(BACKEND_URL&&SESSION.token){
+    var isAdmin=SESSION.isOwner||SESSION.isAdmin, isOwner=SESSION.isOwner, rows=USERS_FULL||[];
+    if(!rows.length){list.innerHTML='<div class="hint">'+t('No users yet')+'</div>';return;}
+    var PK=[['delete',t('Delete quotes')],['currency',t('Edit currency')],['vat',t('Edit VAT')],['disclaimer',t('Edit disclaimer')],['co2',t('Edit CO\u2082')],['charges',t('Edit charges')]];
+    var bs="font-size:12px;padding:2px 9px;border:1px solid var(--line);border-radius:6px;background:#fff;cursor:pointer";
+    list.innerHTML=rows.map(function(u,ui){
+      var role=u.isOwner?t('Owner'):(u.isAdmin?t('Admin'):t('User'));
+      var badge='<span class="pill '+((u.isOwner||u.isAdmin)?'pf':'pd')+'" style="margin-left:6px">'+role+'</span>';
+      var pw=u.hasPassword?'':' <span class="hint">('+t('no password yet')+')</span>';
+      var body;
+      if(u.isOwner||u.isAdmin){body='<div class="hint" style="margin:4px 0">'+t('All permissions')+'</div>';}
+      else{body='<div style="display:flex;flex-wrap:wrap;gap:6px 14px;margin:6px 0">'+PK.map(function(p){return '<label style="font-size:12px;display:flex;align-items:center;gap:5px"><input type="checkbox" data-ui="'+ui+'" data-perm="'+p[0]+'"'+(u.perms&&u.perms[p[0]]?' checked':'')+(isAdmin?'':' disabled')+'>'+p[1]+'</label>';}).join('')+'</div>';}
+      var acts='';
+      if(isAdmin&&!u.isOwner){
+        if(isOwner){acts+='<label style="font-size:12px;display:flex;align-items:center;gap:5px;margin-right:auto"><input type="checkbox" data-grant="'+ui+'"'+(u.isAdmin?' checked':'')+'>'+t('Admin')+'</label>';}
+        acts+='<button data-reset="'+ui+'" style="'+bs+'">'+t('Reset password')+'</button>';
+        acts+='<button data-remove="'+ui+'" style="'+bs+';color:#b91c1c">'+t('Remove')+'</button>';
+      }
+      return '<div style="padding:8px 0;border-bottom:1px solid var(--line)"><div><b>'+escH(u.name)+'</b>'+badge+pw+'</div>'+body+(acts?'<div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">'+acts+'</div>':'')+'</div>';
+    }).join('');
+    list.querySelectorAll('input[data-perm]').forEach(function(cb){cb.onchange=function(){saveUserPerms(+cb.dataset.ui);};});
+    list.querySelectorAll('input[data-grant]').forEach(function(cb){cb.onchange=function(){doGrantAdmin(+cb.dataset.grant,cb.checked);};});
+    list.querySelectorAll('button[data-reset]').forEach(function(b){b.onclick=function(){doResetPw(+b.dataset.reset);};});
+    list.querySelectorAll('button[data-remove]').forEach(function(b){b.onclick=function(){doRemoveUser(+b.dataset.remove);};});
+  } else {
+    list.innerHTML=USERS.map(function(n,i){return '<div class="uitem"><span>'+escH(n)+'</span><button data-i="'+i+'" title="Remove">\u00d7</button></div>';}).join('')||'<div class="hint">'+t('No users yet')+'</div>';
+    list.querySelectorAll('button').forEach(function(b){b.onclick=function(){USERS.splice(+b.dataset.i,1);renderUsers();rebuildPrep();};});
+  }
+}
+function addUser(){var el=$('adminNewUser'),v=el.value.trim();if(!v)return;
+  if(BACKEND_URL&&SESSION.token){
+    if(!(SESSION.isOwner||SESSION.isAdmin)){alert(t('Admins only.'));return;}
+    callBackend('addUser',{userName:v}).then(function(r){if(r&&r.ok){USERS_FULL=r.users||[];USERS=USERS_FULL.map(function(u){return u.name;});el.value='';renderUsers();rebuildPrep();}else alert((r&&r.error)||'Add failed.');}).catch(function(){alert('Could not reach backend.');});
+  } else { if(!USERS.includes(v)){USERS.push(v);el.value='';renderUsers();rebuildPrep();} }
+}
+function snapshot(){
+  const ids=['shipName','consName','shipAddr','consAddr','shipContact','consContact','shipPhone','consPhone','shipEmail','consEmail','origin','dest','container','truck','distance','pallet','palletH','palletsOv','vatPct','incoterm','rate','rateBasis','minCharge','originChg','destChg','insPct','curBase','curRep','fxRate','dbCompany','dbQuoteNo','dbDate','dbPrep','dbValid','quoteName'];
+  const o={fields:{},products:[],state:{mode:state.mode,sea:state.sea,stack:state.stack,units:state.units},RATE:Object.assign({},RATE),DIST:Object.assign({},DIST)};
+  ids.forEach(id=>{const el=$(id);if(el)o.fields[id]=el.value;});
+  document.querySelectorAll('.prow').forEach(r=>o.products.push({name:r.querySelector('.p-name').value,hs:r.querySelector('.p-hs').value,qty:r.querySelector('.p-qty').value,wt:r.querySelector('.p-wt').value,l:r.querySelector('.p-l').value,w:r.querySelector('.p-w').value,h:r.querySelector('.p-h').value,val:r.querySelector('.p-val').value,duty:r.querySelector('.p-duty').value}));
+  return o;
+}
+function restore(snap){
+  state.units=snap.state.units;
+  document.querySelectorAll('[data-units]').forEach(x=>x.classList.toggle('on',x.dataset.units===state.units));
+  const imp=state.units==='imperial';
+  document.querySelectorAll('.u-w').forEach(e=>e.textContent=imp?'lb':'kg');
+  document.querySelectorAll('.u-l').forEach(e=>e.textContent=imp?'in':'cm');
+  document.querySelectorAll('.u-d').forEach(e=>e.textContent='km');
+  updateBasisLabel();
+  Object.keys(snap.fields).forEach(id=>{if($(id))$(id).value=snap.fields[id];});
+  Object.assign(RATE,snap.RATE);Object.assign(DIST,snap.DIST);
+  $('prows').innerHTML='';
+  (snap.products||[]).forEach(p=>addProduct(p));
+  state.sea=snap.state.sea;state.stack=snap.state.stack;
+  setStack(state.stack);
+  document.querySelectorAll('#seaSeg button').forEach(b=>b.classList.toggle('on',b.dataset.sea===state.sea));
+  document.querySelectorAll('.cmp-sea').forEach(b=>b.classList.toggle('on',b.dataset.sea===state.sea));
+  setMode(snap.state.mode);
+  ['air','sea','road'].forEach(m=>{const rf=document.querySelector('.cmp-rate[data-m="'+m+'"]');if(rf)rf.value=RATE[m]||'';const df=document.querySelector('.cmp-dist[data-m="'+m+'"]');if(df)df.value=DIST[m]||'';});
+  updateCmpLabels();compute();
+}
+function latestOf(baseId){const a=SAVES.filter(x=>x.baseId===baseId);return a.length?a.reduce((p,c)=>c.version>=p.version?c:p):null;}
+function nextLabel(){return QUOTEPREFIX+(new Set(SAVES.map(q=>q.baseId)).size+1);}
+async function saveQuote(){
+  const label=$('dbQuoteNo').value||await assignQuoteNo();$('dbQuoteNo').value=label;
+  if(LOADED){const lt=latestOf(LOADED.baseId);
+    if(lt&&lt.status==='draft'){Object.assign(lt,{label:label,name:$('quoteName').value,prep:$('dbPrep').value,date:$('dbDate').value,ts:Date.now(),snap:snapshot()});CURVER=lt.version;renderSaved();syncCur();$('saveMsg').textContent='Draft updated: '+label+'.';return;}}
+  const baseId=Date.now()+'-'+Math.random().toString(36).slice(2,6);
+  SAVES.push({baseId:baseId,label:label,version:1,status:'draft',name:$('quoteName').value,prep:$('dbPrep').value,date:$('dbDate').value,ts:Date.now(),createdBy:$('dbPrep').value||'\u2014',createdAt:Date.now(),snap:snapshot()});
+  LOADED={baseId:baseId,label:label};CURVER=1;renderSaved();syncCur();
+  $('saveMsg').textContent='Draft saved: '+label+'. It becomes final when you export to PDF.';
+}
+function loadQuote(i){
+  const q=SAVES[i];restore(q.snap);LOADED={baseId:q.baseId,label:q.label};CURVER=q.version;
+  $('dbQuoteNo').value=q.label;
+  showView('quote');
+  $('saveMsg').textContent='Editing '+q.label+(q.version>1?(' v'+q.version):'')+' \u2014 exporting saves the next version.';
+}
+function docNameNow(){return [($('dbQuoteNo').value||'Quotation')+(CURVER>1?(' v'+CURVER):''),$('quoteName').value].filter(Boolean).join(' ');}
+async function exportQuote(){
+  const label=$('dbQuoteNo').value||await assignQuoteNo();$('dbQuoteNo').value=label;
+  if(!LOADED){
+    const baseId=Date.now()+'-'+Math.random().toString(36).slice(2,6);CURVER=1;
+    SAVES.push({baseId:baseId,label:label,version:1,status:'final',name:$('quoteName').value,prep:$('dbPrep').value,date:$('dbDate').value,ts:Date.now(),createdBy:$('dbPrep').value||'\u2014',createdAt:Date.now(),snap:snapshot()});
+    LOADED={baseId:baseId,label:label};$('saveMsg').textContent='Exported and saved as final: '+label+'.';
+  }else{
+    const base=SAVES.filter(x=>x.baseId===LOADED.baseId);const lt=latestOf(LOADED.baseId);
+    if(lt&&lt.status==='draft'){CURVER=lt.version;Object.assign(lt,{status:'final',label:label,name:$('quoteName').value,prep:$('dbPrep').value,date:$('dbDate').value,ts:Date.now(),snap:snapshot()});$('saveMsg').textContent='Exported and finalised: '+label+(CURVER>1?(' v'+CURVER):'')+'.';}
+    else{const mv=Math.max.apply(null,base.map(x=>x.version).concat([0]));CURVER=mv+1;const cb=(base[0]&&base[0].createdBy)||$('dbPrep').value||'\u2014';const ca=(base[0]&&base[0].createdAt)||Date.now();SAVES.push({baseId:LOADED.baseId,label:LOADED.label,version:CURVER,status:'final',name:$('quoteName').value,prep:$('dbPrep').value,date:$('dbDate').value,ts:Date.now(),createdBy:cb,createdAt:ca,revisedBy:$('dbPrep').value||'\u2014',revisedAt:Date.now(),snap:snapshot()});$('saveMsg').textContent='Exported as final '+LOADED.label+' v'+CURVER+'.';}
+  }
+  renderSaved();renderDashboard();syncCur();
+  const t=document.title;document.title=docNameNow();window.print();setTimeout(function(){document.title=t;},1500);
+}
+function renderSaved(){
+  const list=$('savedList');if(!list)return;
+  if(!SAVES.length){list.innerHTML='<div class="hint">'+t('No saved quotations yet. Open the Quotation (PDF) tab and click \u201cSave quote\u201d.')+'</div>';$('savedNote').textContent='';return;}
+  list.innerHTML=SAVES.slice().reverse().map(q=>{const i=SAVES.indexOf(q);return '<div class="srow"><div><b>'+q.label+(q.version>1?(' v'+q.version):'')+'</b>'+(q.status==='final'?' <span class="pill pf">'+t('Final')+'</span>':' <span class="pill pd">'+t('Draft')+'</span>')+(q.name?(' <span style="color:var(--muted)">'+q.name+'</span>'):'')+'<div class="meta">'+t('created by')+' '+(q.createdBy||q.prep||'\u2014')+' \u00b7 '+new Date(q.createdAt||q.ts).toLocaleDateString()+(q.revisedBy?(' \u00b7 '+t('revised by')+' '+q.revisedBy+' \u00b7 '+new Date(q.revisedAt).toLocaleDateString()):'')+'</div></div><div class="acts"><button data-a="load" data-i="'+i+'">'+t('Load & edit')+'</button>'+(canDel()?'<button data-a="del" data-i="'+i+'">'+t('Delete')+'</button>':'')+'</div></div>';}).join('');
+  list.querySelectorAll('button').forEach(b=>b.onclick=()=>{const i=+b.dataset.i;if(b.dataset.a==='del'){const sv=SAVES[i];SAVES.splice(i,1);renderSaved();if(BACKEND_URL&&SESSION.name){callBackend('deleteQuote',{baseId:sv.baseId,version:sv.version}).then(function(r){if(r&&r.error)alert(r.error);}).catch(function(){});}}else loadQuote(i);});
+  $('savedNote').textContent=(BACKEND_URL&&SESSION.name)?t('Saved to the shared Google Sheet \u2014 visible to everyone, with version history.'):t('Held in this session for now \u2014 these save to the shared Google Sheet once the backend is connected.');
+}
+function exportBackup(){
+  const data={savedAt:new Date().toISOString(),saves:SAVES,settings:{USERS:USERS,DISCLAIMER:DISCLAIMER,QUOTEPREFIX:QUOTEPREFIX,CO2F:CO2F,LOGO:LOGO,company:{name:$('adminCompany').value,addr:$('adminAddr').value,cur:$('curBase').value,vat:$('vatPct').value}}};
+  const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='freight-estimator-backup-'+new Date().toISOString().slice(0,10)+'.json';a.click();URL.revokeObjectURL(a.href);
+}
+function importBackup(e){
+  const f=e.target.files[0];if(!f)return;const r=new FileReader();
+  r.onload=ev=>{try{const d=JSON.parse(ev.target.result);if(Array.isArray(d.saves))SAVES=d.saves;const st=d.settings||{};if(st.USERS)USERS=st.USERS;if(st.DISCLAIMER)DISCLAIMER=st.DISCLAIMER;if(st.QUOTEPREFIX)QUOTEPREFIX=st.QUOTEPREFIX;if(st.CO2F)Object.assign(CO2F,st.CO2F);if(st.LOGO){LOGO=st.LOGO;applyLogo();}if(st.company&&st.company.name){$('adminCompany').value=st.company.name;$('dbCompany').value=st.company.name;}renderUsers();rebuildPrep();renderSaved();renderDashboard();alert('Backup imported.');}catch(err){alert('Could not read that backup file.');}};
+  r.readAsText(f);e.target.value='';
+}
+function newQuotation(){
+  LOADED=null;CURVER=1;
+  ['shipName','consName','shipAddr','consAddr','shipContact','consContact','shipPhone','consPhone','shipEmail','consEmail','origin','dest','dbQuoteNo','dbValid','minCharge','rate'].forEach(id=>{if($(id))$(id).value='';});
+  RATE.air='';RATE.sea='';RATE.road='';
+  document.querySelectorAll('.cmp-rate').forEach(f=>f.value='');
+  $('prows').innerHTML='';addProduct({name:'',hs:'',qty:'1',wt:'',l:'',w:'',h:'',val:'',duty:''});
+  try{$('dbDate').valueAsDate=new Date();}catch(e){}
+  if($('saveMsg'))$('saveMsg').textContent='';
+  showView('estimator');
+  compute();renderDashboard();
+}
+function checkDrafts(){
+  const el=$('draftRemind');if(!el)return;
+  const drafts=SAVES.filter(q=>q.status==='draft'&&!DRAFT_DISMISS[q.baseId]);
+  if(!drafts.length){el.style.display='none';return;}
+  const q=drafts[drafts.length-1];
+  el.innerHTML='<span>\u2139\ufe0f '+t('You have an unfinished draft:')+' <b>'+q.label+'</b>'+(q.name?(' \u2014 '+q.name):'')+'. '+t('It hasn\'t been exported to PDF yet, so it isn\'t final.')+'</span><div class="acts"><button data-a="load">'+t('Load & edit')+'</button><button data-a="hide">'+t('Dismiss')+'</button><button data-a="never">'+t('Don\'t show again')+'</button></div>';
+  el.style.display='';
+  el.querySelector('[data-a="load"]').onclick=()=>{loadQuote(SAVES.indexOf(q));};
+  el.querySelector('[data-a="hide"]').onclick=()=>{el.style.display='none';};
+  el.querySelector('[data-a="never"]').onclick=()=>{DRAFT_DISMISS[q.baseId]=true;el.style.display='none';};
+}
+let LANG='en';
+const I18N={
+ de:{'Set up the admin':'Administrator einrichten','No admin exists yet. Create the first admin account — you become the owner and can add everyone else.':'Es existiert noch kein Administrator. Erstellen Sie das erste Administratorkonto — Sie werden zum Eigentümer und können alle anderen hinzufügen.','Your name':'Ihr Name','Create password':'Passwort erstellen','Confirm password':'Passwort bestätigen','Create admin':'Administrator erstellen','Select your name and enter your password.':'Wählen Sie Ihren Namen und geben Sie Ihr Passwort ein.','Password':'Passwort','Create your password':'Ihr Passwort erstellen','Signing in as':'Anmeldung als','for the first time.':'zum ersten Mal.','Choose a password you will use every time from now on.':'Wählen Sie ein Passwort, das Sie ab jetzt jedes Mal verwenden.','New password':'Neues Passwort','Set password & sign in':'Passwort festlegen & anmelden','Back':'Zurück','Owner':'Eigentümer','Admin':'Admin','User':'Benutzer','Delete quotes':'Angebote löschen','Edit currency':'Währung bearbeiten','Edit VAT':'MwSt. bearbeiten','Edit disclaimer':'Haftungsausschluss bearbeiten','Edit CO₂':'CO₂ bearbeiten','Edit charges':'Gebühren bearbeiten','All permissions':'Alle Berechtigungen','no password yet':'noch kein Passwort','Reset password':'Passwort zurücksetzen','Remove':'Entfernen','No users yet':'Noch keine Benutzer','Pick your name.':'Wählen Sie Ihren Namen.','Enter your password.':'Geben Sie Ihr Passwort ein.','Passwords do not match.':'Passwörter stimmen nicht überein.','Password must be at least 6 characters.':'Das Passwort muss mindestens 6 Zeichen lang sein.','Enter a name.':'Geben Sie einen Namen ein.','Incorrect password.':'Falsches Passwort.','Could not reach the backend. Check the URL.':'Backend nicht erreichbar. Überprüfen Sie die URL.','Admins only.':'Nur für Administratoren.','Reset password for ':'Passwort zurücksetzen für ','Remove ':'Entfernen ','over goods value':'über Warenwert','excluded':'ausgeschlossen','enter a rate for cost':'Satz für Kosten eingeben','cheapest':'günstigste','unsaved':'nicht gespeichert','← Back to calculator':'← Zurück zum Rechner','Guide & glossary':'Anleitung & Glossar','Read this once and the rest of the tool will make sense. It explains what every number means, how a landed cost is built, which figures are solid and which are estimates, and the values used behind the scenes.':'Lesen Sie dies einmal, und der Rest des Tools erklärt sich von selbst. Es erläutert, was jede Zahl bedeutet, wie eine Landed Cost aufgebaut wird, welche Werte belastbar und welche Schätzungen sind, und welche Werte im Hintergrund verwendet werden.','What this tool is':'Was dieses Tool ist','A landed-cost estimator for buyers without a transport management system. You enter your own freight rate and cargo, and it builds the full delivered cost — freight, insurance, customs duty, import VAT, and local charges — plus a mode comparison, carbon footprint, and a printable quotation. It is an':'Ein Landed-Cost-Rechner für Einkäufer ohne Transportmanagementsystem. Sie geben Ihren eigenen Frachtsatz und Ihre Ladung ein, und er erstellt die vollständigen Lieferkosten — Fracht, Versicherung, Zoll, Einfuhr-MwSt. und lokale Gebühren — plus einen Verkehrsträgervergleich, den CO₂-Fußabdruck und ein druckbares Angebot. Es ist eine','estimate to support a decision, not a binding quote':'Schätzung zur Entscheidungsunterstützung, kein verbindliches Angebot','. Treat the output as a well-structured first number, then confirm freight and duty with your forwarder and customs broker.':'. Behandeln Sie das Ergebnis als gut strukturierte erste Zahl und bestätigen Sie Fracht und Zoll dann mit Ihrem Spediteur und Zollagenten.','How a landed-cost number is built (in order)':'Wie eine Landed-Cost-Zahl aufgebaut wird (in dieser Reihenfolge)','1. Cargo':'1. Ladung','Every product row is summed into total weight and total volume.':'Jede Produktzeile wird zu Gesamtgewicht und Gesamtvolumen summiert.','2. Chargeable weight / volume':'2. Frachtpflichtiges Gewicht / Volumen','Converted to what carriers actually bill: air uses volumetric weight (volume in cm³ ÷ 6000), sea LCL uses the revenue ton (the greater of cubic metres or tonnes), and sea FCL / road work out how many containers or trucks the cargo fills.':'Umgerechnet auf das, was Carrier tatsächlich berechnen: Luft nutzt das Volumengewicht (Volumen in cm³ ÷ 6000), See-LCL die Frachttonne (der größere Wert aus Kubikmetern oder Tonnen), und See-FCL / Straße ermitteln, wie viele Container oder Lkw die Ladung füllt.','3. Freight':'3. Fracht','Chargeable amount × your rate, or the minimum charge if that is higher. For FCL/road it is number of units × rate.':'Frachtpflichtige Menge × Ihr Satz, oder die Mindestgebühr, falls diese höher ist. Bei FCL/Straße: Anzahl der Einheiten × Satz.','4. Insurance':'4. Versicherung','Goods value × your insurance % × 1.1 (the customary “CIF + 10%” basis).':'Warenwert × Ihr Versicherungssatz % × 1,1 (die übliche Basis „CIF + 10 %“).','5. Customs value (CIF)':'5. Zollwert (CIF)','Goods + freight + insurance. This is the value duty is charged on.':'Ware + Fracht + Versicherung. Auf diesen Wert wird der Zoll berechnet.','6. Duty':'6. Zoll','Each product’s own duty % applied to its share of the customs value, then added up.':'Der eigene Zollsatz % jedes Produkts wird auf seinen Anteil am Zollwert angewandt und dann summiert.','7. Import VAT / GST':'7. Einfuhr-MwSt. / USt.','Your VAT % applied to (customs value + duty).':'Ihr MwSt.-Satz % angewandt auf (Zollwert + Zoll).','8. Local charges':'8. Lokale Gebühren','Origin and destination charges are added or excluded depending on the Incoterm.':'Ursprungs- und Bestimmungsgebühren werden je nach Incoterm hinzugefügt oder ausgeschlossen.','9. Landed cost':'9. Landed Cost','The sum of the lines your Incoterm makes you responsible for. Lines the supplier covers are struck out and excluded.':'Die Summe der Positionen, für die Ihr Incoterm Sie verantwortlich macht. Vom Lieferanten getragene Positionen sind durchgestrichen und ausgeschlossen.','How transit days are estimated':'Wie Laufzeittage geschätzt werden','With no schedule API connected, transit is estimated as':'Ohne angebundene Fahrplan-API wird die Laufzeit geschätzt als','distance ÷ an effective daily pace + a fixed handling buffer':'Distanz ÷ ein effektives Tagestempo + ein fester Handling-Puffer',', floored at a sensible minimum. The pace is deliberately below top speed because it bakes in real-world limits (driver-hour rules, port dwell, waiting for the next flight); the buffer covers loading, terminal handling and customs at both ends.':', begrenzt auf ein sinnvolles Minimum. Das Tempo liegt bewusst unter der Höchstgeschwindigkeit, weil es reale Grenzen einrechnet (Lenkzeitregeln, Hafenliegezeit, Warten auf den nächsten Flug); der Puffer deckt Verladung, Terminalabfertigung und Zoll an beiden Enden ab.','Air':'Luft','estimate':'Schätzung','round(distance ÷ 4000) + 2 days, minimum 2. A 9,000 km lane ≈ 4 days. The low pace reflects that air-freight time is dominated by handling and consolidation, not flight hours.':'round(Distanz ÷ 4000) + 2 Tage, mindestens 2. Eine 9.000-km-Strecke ≈ 4 Tage. Das niedrige Tempo spiegelt wider, dass die Luftfrachtzeit von Handling und Konsolidierung bestimmt wird, nicht von Flugstunden.','Sea':'See','round(distance ÷ 700) + 6 days, minimum 5. A 19,000 km Asia–Europe lane ≈ 33 days, in the usual 30–40 day range.':'round(Distanz ÷ 700) + 6 Tage, mindestens 5. Eine 19.000-km-Strecke Asien–Europa ≈ 33 Tage, im üblichen Bereich von 30–40 Tagen.','Road':'Straße','round(distance ÷ 600) + 1 day, minimum 1. A 1,200 km lane ≈ 3 days.':'round(Distanz ÷ 600) + 1 Tag, mindestens 1. Eine 1.200-km-Strecke ≈ 3 Tage.','Typing a transit number yourself overrides the estimate and is treated as a real figure. Admin lane times (once the backend is connected) replace the formula with your own door-to-door times per route.':'Wenn Sie selbst eine Laufzeit eingeben, überschreibt diese die Schätzung und wird als reale Zahl behandelt. Admin-Streckenzeiten (sobald das Backend verbunden ist) ersetzen die Formel durch Ihre eigenen Tür-zu-Tür-Zeiten je Route.','How the carbon footprint is calculated':'Wie der CO₂-Fußabdruck berechnet wird','Manual mode (default, free):':'Manueller Modus (Standard, kostenlos):','emissions = cargo weight in tonnes × distance in km × a per-mode factor. The built-in factors are Air 0.6, Sea 0.016, Road 0.1 kg CO₂e per tonne-km (DEFRA / GLEC aligned), and they are editable in Admin so you can drop in your own source.':'Emissionen = Ladungsgewicht in Tonnen × Distanz in km × ein Faktor je Verkehrsträger. Die integrierten Faktoren sind Luft 0,6, See 0,016, Straße 0,1 kg CO₂e pro Tonnen-km (an DEFRA / GLEC angelehnt) und in Admin editierbar, sodass Sie Ihre eigene Quelle einsetzen können.','EcoFreight mode (optional, needs backend):':'EcoFreight-Modus (optional, benötigt Backend):','when switched on in Admin and the Apps Script backend is connected with an API key, the app sends origin, destination, weight and mode to EcoFreight for GLEC v3.2 / ISO 14083 leg-by-leg emissions, and falls back to the manual factors if the service is unavailable or over its monthly free quota.':'wenn in Admin aktiviert und das Apps-Script-Backend mit einem API-Schlüssel verbunden ist, sendet die App Ursprung, Ziel, Gewicht und Verkehrsträger an EcoFreight für abschnittsweise Emissionen nach GLEC v3.2 / ISO 14083 und greift auf die manuellen Faktoren zurück, falls der Dienst nicht verfügbar ist oder das monatliche Gratiskontingent überschritten wurde.','Either way the carbon number is an':'In beiden Fällen ist die CO₂-Zahl eine','— useful for comparing modes, not a measured figure.':'— nützlich zum Vergleich von Verkehrsträgern, kein gemessener Wert.','Sea distance in nautical miles':'Seedistanz in Seemeilen','Sea distances are often quoted in nautical miles. In the Comparison tab’s Sea card, the “Have nautical miles?” helper converts them for you (1 NM = 1.852 km) and fills the distance field in your current unit, which then feeds both the freight and the emissions calculation.':'Seedistanzen werden oft in Seemeilen angegeben. In der See-Karte des Vergleich-Tabs rechnet der Helfer „Seemeilen vorhanden?“ sie für Sie um (1 NM = 1,852 km) und füllt das Distanzfeld in Ihrer aktuellen Einheit, was dann in die Fracht- und die Emissionsberechnung einfließt.','Genuine figures vs estimates':'Echte Werte vs. Schätzungen','This is the most important section. Use the genuine numbers with confidence; treat the estimates as planning figures to verify.':'Dies ist der wichtigste Abschnitt. Nutzen Sie die echten Zahlen mit Vertrauen; behandeln Sie die Schätzungen als zu prüfende Planungswerte.','Genuine':'Echt','from your input / definite':'aus Ihrer Eingabe / definitiv','Goods value, duty %, VAT %, your freight rate, your min charge, origin/destination charges, insurance %, the Incoterm allocation rules, the CIF customs method, and all the arithmetic that combines them. If your inputs are right, these are right.':'Warenwert, Zoll %, MwSt. %, Ihr Frachtsatz, Ihre Mindestgebühr, Ursprungs-/Bestimmungsgebühren, Versicherung %, die Incoterm-Zuordnungsregeln, die CIF-Zollmethode und die gesamte Arithmetik, die sie kombiniert. Wenn Ihre Eingaben stimmen, stimmen diese Werte.','Estimated':'Geschätzt','modelled / will vary':'modelliert / wird variieren','Chargeable weight (depends on how the cargo is actually packed), the number of containers/trucks and the stacking fit (modelled from your dimensions and a packing-efficiency assumption), the carbon footprint (a generic factor × distance × weight), transit days (distance-based), and the FX rate (live, but it moves). The real carrier invoice can differ.':'Frachtpflichtiges Gewicht (hängt davon ab, wie die Ladung tatsächlich gepackt ist), die Anzahl der Container/Lkw und die Stapel-Passung (modelliert aus Ihren Maßen und einer Packeffizienz-Annahme), der CO₂-Fußabdruck (ein generischer Faktor × Distanz × Gewicht), Laufzeittage (distanzbasiert) und der Wechselkurs (live, aber er bewegt sich). Die tatsächliche Carrier-Rechnung kann abweichen.','Glossary':'Glossar','Chargeable weight':'Frachtpflichtiges Gewicht','The figure a carrier bills on — the greater of actual weight and a volume-based weight, so light bulky cargo isn’t under-charged.':'Der Wert, auf den ein Carrier abrechnet — der größere aus tatsächlichem Gewicht und einem volumenbasierten Gewicht, damit leichte, sperrige Ladung nicht zu niedrig berechnet wird.','Volumetric (dimensional) weight':'Volumengewicht (Maßgewicht)','Volume converted to a weight using a divisor; here 6000 cm³/kg for air.':'Volumen, mit einem Divisor in ein Gewicht umgerechnet; hier 6000 cm³/kg für Luft.','Revenue ton (sea LCL)':'Frachttonne (See-LCL)','Sea LCL is billed per the larger of cubic metres or tonnes (minimum 1).':'See-LCL wird nach dem größeren Wert aus Kubikmetern oder Tonnen abgerechnet (mindestens 1).','LCL / FCL':'LCL / FCL','Less-than-Container Load (you share a box) vs Full-Container Load (you book a whole container).':'Less-than-Container Load (Sie teilen sich einen Container) vs. Full-Container Load (Sie buchen einen ganzen Container).','Stacking levels':'Stapelebenen','How many layers of cargo can be stacked inside a container/truck (single/double/triple), which changes how much fits.':'Wie viele Ladungslagen in einem Container/Lkw gestapelt werden können (einfach/doppelt/dreifach), was beeinflusst, wie viel hineinpasst.','Packing efficiency':'Packeffizienz','Real loads never fill 100% of a box; the tool assumes 85% usable space.':'Reale Ladungen füllen nie 100 % eines Containers; das Tool nimmt 85 % nutzbaren Raum an.','CIF':'CIF','Cost, Insurance & Freight — the value (goods + freight + insurance) that customs duty is calculated on.':'Cost, Insurance & Freight — der Wert (Ware + Fracht + Versicherung), auf den der Zoll berechnet wird.','Incoterm':'Incoterm','The rule that splits costs and risk between supplier and buyer (e.g. EXW, FOB, CIF, DDP). It decides which lines you actually pay.':'Die Regel, die Kosten und Risiko zwischen Lieferant und Käufer aufteilt (z. B. EXW, FOB, CIF, DDP). Sie bestimmt, welche Positionen Sie tatsächlich zahlen.','Duty':'Zoll','Import tax set by the destination country, based on the product’s HS code, applied to the customs value.':'Einfuhrsteuer des Bestimmungslandes, basierend auf dem HS-Code des Produkts, angewandt auf den Zollwert.','Import VAT / GST':'Einfuhr-MwSt. / USt.','Consumption tax charged on (customs value + duty) at import.':'Verbrauchsteuer, erhoben auf (Zollwert + Zoll) bei der Einfuhr.','Carbon footprint (CO₂e)':'CO₂-Fußabdruck (CO₂e)','Estimated transport emissions: weight × distance × a per-mode factor.':'Geschätzte Transportemissionen: Gewicht × Distanz × ein Faktor je Verkehrsträger.','Landed cost':'Landed Cost','The total delivered cost of getting the goods to your door under the chosen Incoterm.':'Die gesamten Lieferkosten, um die Ware unter dem gewählten Incoterm bis zu Ihrer Tür zu bringen.','Logistics uplift':'Logistik-Aufschlag','How much the landed cost exceeds the bare goods value, as a %.':'Um wie viel die Landed Cost den reinen Warenwert übersteigt, in %.','Values used in the engine':'Im Rechner verwendete Werte','Defaults below; the ones marked editable can be changed in Admin (☰, top-left).':'Standardwerte unten; die als editierbar markierten können in Admin (☰, oben links) geändert werden.','Air volumetric divisor':'Luft-Volumendivisor','6000 cm³ per kg.':'6000 cm³ pro kg.','Sea LCL revenue ton':'See-LCL-Frachttonne','max(cubic metres, tonnes), minimum 1.':'max(Kubikmeter, Tonnen), mindestens 1.','CO₂ factors':'CO₂-Faktoren','editable':'editierbar','Air 0.6, Sea 0.016, Road 0.1 kg CO₂e per tonne-km (DEFRA / GLEC aligned). Air is far higher than sea by design.':'Luft 0,6, See 0,016, Straße 0,1 kg CO₂e pro Tonnen-km (an DEFRA / GLEC angelehnt). Luft ist konstruktionsbedingt weit höher als See.','Insurance basis':'Versicherungsbasis','value × insurance % × 1.1 (CIF + 10%).':'Wert × Versicherung % × 1,1 (CIF + 10 %).','Duty & VAT':'Zoll & MwSt.','Duty on the CIF customs value, per product; VAT on (customs value + duty).':'Zoll auf den CIF-Zollwert, je Produkt; MwSt. auf (Zollwert + Zoll).','editable soon':'bald editierbar','85% of internal volume usable; stacked layers capped by the tallest item’s height.':'85 % des Innenvolumens nutzbar; gestapelte Lagen durch die Höhe des höchsten Artikels begrenzt.','Container internals (L×W×H cm / payload kg)':'Container-Innenmaße (L×B×H cm / Nutzlast kg)','20’GP 589·234·239 / 28200; 40’GP 1203·234·239 / 28800; 40’HC 1203·234·269 / 28600; 45’HC 1355·234·269 / 27700.':'20’GP 589·234·239 / 28200; 40’GP 1203·234·239 / 28800; 40’HC 1203·234·269 / 28600; 45’HC 1355·234·269 / 27700.','Truck internals':'Lkw-Innenmaße','From small van up to 13.6 m semi-trailer and mega-trailer.':'Vom kleinen Transporter bis zum 13,6-m-Sattelauflieger und Mega-Trailer.','Transit estimate':'Laufzeitschätzung','Rough, distance-based per mode; replaced by your real lane times once the Transit table is set in Admin.':'Grob, distanzbasiert je Verkehrsträger; ersetzt durch Ihre realen Streckenzeiten, sobald die Laufzeittabelle in Admin gesetzt ist.','FX':'Wechselkurs','Live daily ECB reference rate, with a manual override.':'Täglicher EZB-Referenzkurs (live), mit manueller Überschreibung.','Enter a rate for cost':'Satz für Kosten eingeben','per container)':'pro Container)','Final':'Endgültig','Draft':'Entwurf','created by':'erstellt von','revised by':'überarbeitet von','Load & edit':'Laden & bearbeiten','Delete':'Löschen','No saved quotations yet. Open the Quotation (PDF) tab and click “Save quote”.':'Noch keine gespeicherten Angebote. Öffnen Sie den Tab „Angebot (PDF)“ und klicken Sie auf „Angebot speichern“.','Saved to the shared Google Sheet — visible to everyone, with version history.':'Im gemeinsamen Google Sheet gespeichert — für alle sichtbar, mit Versionsverlauf.','Held in this session for now — these save to the shared Google Sheet once the backend is connected.':'Vorerst nur in dieser Sitzung — diese werden im gemeinsamen Google Sheet gespeichert, sobald das Backend verbunden ist.','You have an unfinished draft:':'Sie haben einen unfertigen Entwurf:','It hasn\'t been exported to PDF yet, so it isn\'t final.':'Er wurde noch nicht als PDF exportiert und ist daher nicht endgültig.','Don\'t show again':'Nicht mehr anzeigen','product':'Ware','origin/export':'Ursprung/Export','freight':'Fracht','insurance':'Versicherung','destination':'Bestimmung','duty & tax':'Zoll & Steuer','Under':'Bei','you pay:':'zahlen Sie:','Supplier covers:':'Lieferant übernimmt:','Struck-through lines below are the supplier’s.':'Durchgestrichene Zeilen unten gehen zulasten des Lieferanten.','Chargeable = the greater of actual weight or volumetric weight (volume × 1,000,000 ÷ 6000). Your per-kg rate is applied to it.':'Frachtpflichtig = der größere Wert aus tatsächlichem Gewicht oder Volumengewicht (Volumen × 1.000.000 ÷ 6000). Ihr Satz pro kg wird darauf angewandt.','Chargeable = revenue ton: the greater of volume (CBM) or weight (tonnes), minimum 1. Your per-CBM rate is applied to it.':'Frachtpflichtig = Frachttonne: der größere Wert aus Volumen (CBM) oder Gewicht (Tonnen), mindestens 1. Ihr Satz pro CBM wird darauf angewandt.','Chargeable = containers needed, from how your items stack into the selected container (limited by volume, weight and stacking).':'Frachtpflichtig = benötigte Container, abhängig davon, wie Ihre Artikel in den gewählten Container passen (begrenzt durch Volumen, Gewicht und Stapelung).','Chargeable = trucks needed, from how your items stack into the selected truck body; freight = trucks × distance × your per-distance rate.':'Frachtpflichtig = benötigte Lkw, abhängig davon, wie Ihre Artikel in den gewählten Lkw-Aufbau passen; Fracht = Lkw × Distanz × Ihr Satz pro Distanz.','cont':'Cont.','high':'hoch','items too tall':'Artikel zu hoch','truck(s)':'Lkw','pallet(s)':'Palette(n)','(auto)':'(auto)','units':'Einheiten','unit':'Einheit','Chargeable':'Frachtpflichtig','units per':'Einheiten pro','truck':'Lkw','container':'Container','at':'bei','needed':'benötigt','supplier':'Lieferant','Duty (per product)':'Zoll (pro Produkt)','Total landed (your cost)':'Landed Cost gesamt (Ihre Kosten)','edited':'bearbeitet','%s applies to sea / inland-waterway only. For %s, use FCA, CPT, CIP, DAP, or DDP.':'%s gilt nur für See-/Binnenschifffahrt. Für %s verwenden Sie FCA, CPT, CIP, DAP oder DDP.','Container only %s% full — LCL is likely cheaper at this volume.':'Container nur zu %s % gefüllt — bei diesem Volumen ist LCL wahrscheinlich günstiger.','Items are taller than the selected %s — they will not fit. Choose a taller body or reduce item height.':'Artikel sind höher als der gewählte %s — sie passen nicht. Wählen Sie einen höheren Aufbau oder verringern Sie die Artikelhöhe.','Selected %s height allows only %s layer(s); %s-stacking will not fully fit.':'Höhe des gewählten %s erlaubt nur %s Lage(n); %s-Stapelung passt nicht vollständig.','Minimum charge applied.':'Mindestgebühr angewandt.','DDP — supplier covers duty & tax, so they\'re excluded from your cost.':'DDP — der Lieferant trägt Zoll & Steuer, daher sind sie aus Ihren Kosten ausgenommen.','Excluded for this route':'Für diese Route ausgeschlossen','days':'Tage','(est.)':'(geschätzt)','Cheapest':'Günstigste','double':'Doppel','triple':'Dreifach','Your Company':'Ihre Firma','Freight Cost Estimator':'Frachtkostenrechner','Sign in':'Anmelden','Select your name and enter your PIN. Admins enter the admin password.':'Wählen Sie Ihren Namen und geben Sie Ihre PIN ein. Admins geben das Admin-Passwort ein.','Name':'Name','PIN / password':'PIN / Passwort','Enter':'Anmelden','Use locally without backend':'Lokal ohne Backend verwenden','Backend':'Backend','Backend Web App URL':'Backend-Web-App-URL','Test connection':'Verbindung testen','Disconnect':'Trennen','Save all settings to Sheet':'Alle Einstellungen im Sheet speichern','(set in admin)':'(im Admin festlegen)','This is a live page — if you refresh or close the tab, any unsaved work is lost. Save your quote when you\'re done (it stays in Saved Quotes for this session, and in the shared Sheet once the backend is connected).':'Dies ist eine Live-Seite — beim Aktualisieren oder Schließen des Tabs gehen nicht gespeicherte Daten verloren. Speichern Sie Ihr Angebot, wenn Sie fertig sind (es bleibt in dieser Sitzung unter „Gespeicherte Angebote“ und nach Backend-Anbindung im gemeinsamen Sheet).','Van / Sprinter (4.2×1.8×1.9 m · 1.2 t)':'Transporter / Sprinter (4.2×1.8×1.9 m · 1.2 t)','7.5 t box (6.0×2.4×2.4 m · 2.8 t)':'7,5-t-Koffer (6.0×2.4×2.4 m · 2.8 t)','12 t box (7.2×2.45×2.45 m · 6 t)':'12-t-Koffer (7.2×2.45×2.45 m · 6 t)','18 t box (9.2×2.45×2.5 m · 10 t)':'18-t-Koffer (9.2×2.45×2.5 m · 10 t)','Semi-trailer 13.6 m (13.6×2.45×2.7 m · 24 t)':'Sattelauflieger 13,6 m (13.6×2.45×2.7 m · 24 t)','Mega trailer 13.6 m (13.6×2.48×3.0 m · 24 t)':'Mega-Trailer 13,6 m (13.6×2.48×3.0 m · 24 t)','Same shipment, costed across modes. Your estimator rate carries into its mode; enter rates for the others. Toggle off any mode that isn\'t possible for this route.':'Dieselbe Sendung, über alle Verkehrsträger kalkuliert. Ihr Satz aus dem Rechner wird in den jeweiligen Verkehrsträger übernommen; geben Sie die Sätze für die anderen ein. Schalten Sie jeden für diese Route unmöglichen Verkehrsträger ab.','Estimator':'Rechner','Comparison':'Vergleich','Dashboard':'Übersicht','Quotation (PDF)':'Angebot (PDF)','Saved Quotes':'Gespeicherte Angebote','Guide':'Anleitung','About':'Über',
+ 'Parties':'Parteien','Route & mode':'Route & Verkehrsträger','Products':'Produkte','Cargo & packing':'Fracht & Verpackung','Value, duty & terms':'Wert, Zoll & Bedingungen','Your freight rate':'Ihr Frachtsatz',
+ 'Cost composition (your cost)':'Kostenzusammensetzung (Ihre Kosten)','Mode comparison':'Verkehrsträgervergleich','Saved quotations':'Gespeicherte Angebote',
+ 'Admin settings':'Admin-Einstellungen','Language':'Sprache','Open guide & glossary':'Anleitung & Glossar öffnen','Admin password':'Admin-Passwort','Company profile':'Firmenprofil','Company name':'Firmenname','Company address':'Firmenadresse','Default currency':'Standardwährung','Default VAT %':'Standard-MwSt. %','Quote number prefix':'Angebotsnummer-Präfix','No logo uploaded':'Kein Logo hochgeladen','Company logo':'Firmenlogo','CO₂ factors (kg CO₂e per tonne-km)':'CO₂-Faktoren (kg CO₂e pro Tonnen-km)','Default charges':'Standardgebühren','Origin':'Ursprung','Destination':'Bestimmungsort','Insurance %':'Versicherung %','Display & sources':'Anzeige & Quellen','Transit time':'Laufzeit','Show transit days in the calculator & PDF':'Laufzeit-Tage im Rechner & PDF anzeigen','Carbon footprint':'CO₂-Fußabdruck','Show CO₂e in the calculator & PDF':'CO₂e im Rechner & PDF anzeigen','Carbon footprint source':'Quelle CO₂-Fußabdruck','Manual factors (built-in, free)':'Manuelle Faktoren (integriert, kostenlos)','EcoFreight API — needs backend':'EcoFreight-API — Backend erforderlich','Users (Prepared by)':'Benutzer (Erstellt von)','+ Add user':'+ Benutzer hinzufügen','Coming with the backend':'Kommt mit dem Backend',
+ 'Preview mode — changes apply to this session only. Connect the Apps Script backend to sign in, manage users, and save settings for everyone.':'Vorschaumodus — Änderungen gelten nur für diese Sitzung. Verbinden Sie das Apps-Script-Backend, um sich anzumelden, Benutzer zu verwalten und Einstellungen für alle zu speichern.',
+ 'Per-user permissions, plus container/truck catalogue & lane transit times, become editable here, and every setting saves to the shared Google Sheet — guarded by the admin password and stamped with who changed what and when.':'Benutzerrechte sowie Container-/Lkw-Katalog & Laufzeiten je Strecke werden hier bearbeitbar, und jede Einstellung wird im gemeinsamen Google Sheet gespeichert — geschützt durch das Admin-Passwort und versehen mit wer was wann geändert hat.',
+ 'Main currency':'Hauptwährung','Alternate currency':'Alternativwährung','(none)':'(keine)','Exchange rate':'Wechselkurs','Units':'Einheiten','Metric':'Metrisch','Imperial':'Imperial',
+ 'Not saved automatically.':'Wird nicht automatisch gespeichert.',"This is a live page — if you refresh or close the tab, any unsaved work is lost. Save your quote when you're done (it stays in Saved Quotes for this session, and in the shared Sheet once the backend is connected).":'Dies ist eine Live-Seite — beim Aktualisieren oder Schließen des Tabs gehen nicht gespeicherte Daten verloren. Speichern Sie Ihr Angebot, wenn Sie fertig sind (es bleibt in dieser Sitzung unter Gespeicherte Angebote und im gemeinsamen Sheet, sobald das Backend verbunden ist).',
+ '+ New quotation':'+ Neues Angebot','Supplying entity (supplier)':'Liefernde Partei (Lieferant)','Buying entity (buyer)':'Kaufende Partei (Käufer)','Supplying entity address':'Adresse der liefernden Partei','Buying entity / delivery address':'Kaufende Partei / Lieferadresse','Supplier contact (optional)':'Lieferantenkontakt (optional)','Buyer contact (optional)':'Käuferkontakt (optional)','Supplier phone (optional)':'Lieferant Telefon (optional)','Buyer phone (optional)':'Käufer Telefon (optional)','Supplier email (optional)':'Lieferant E-Mail (optional)','Buyer email (optional)':'Käufer E-Mail (optional)',
+ 'Transport mode':'Verkehrsträger','Ocean service':'Seefracht-Service','Truck body':'Lkw-Aufbau','Stacking level':'Stapelebenen','Single':'Einfach','Double':'Doppelt','Triple':'Dreifach','How many items can be stacked vertically. Capped by item height vs the container/truck internal height.':'Wie viele Packstücke vertikal gestapelt werden können. Begrenzt durch Stückhöhe und Innenhöhe des Containers/Lkw.','Container':'Container','Route distance (':'Streckendistanz (','Drives road cost, carbon footprint and transit estimates. Approximate is fine.':'Bestimmt Straßenkosten, CO₂-Fußabdruck und Laufzeitschätzung. Ungefähr reicht.',
+ 'Products':'Produkte','+ Add product':'+ Produkt hinzufügen','Each product carries its own HS code and Duty %. Freight & insurance are split across products by value; VAT is a single destination rate (set below).':'Jedes Produkt hat einen eigenen HS-Code und Zollsatz %. Fracht & Versicherung werden wertanteilig auf die Produkte verteilt; die MwSt. ist ein einheitlicher Satz am Bestimmungsort (unten festgelegt).',
+ 'Cargo & packing':'Fracht & Verpackung','Pallet type':'Palettentyp','Std 120×100 cm':'Standard 120×100 cm','Loaded pallet height (':'Beladene Palettenhöhe (','Pallets needed':'Benötigte Paletten','Leave blank to auto-estimate from product volume.':'Leer lassen, um automatisch aus dem Produktvolumen zu schätzen.',
+ 'Cargo value (':'Warenwert (','VAT / GST %':'MwSt. / USt. %','Your freight rate':'Ihr Frachtsatz','Rate (':'Satz (','Basis':'Basis','per CBM':'pro CBM','per kg':'pro kg','per container':'pro Container','per km':'pro km','Min charge (':'Mindestgebühr (','Origin charges (':'Ursprungsgebühren (','Destination charges (':'Bestimmungsgebühren (','From your forwarder quote — the tool builds the full landed cost from this.':'Aus dem Angebot Ihres Spediteurs — daraus berechnet das Tool die gesamte Landed Cost.',
+ 'Estimated landed cost':'Geschätzte Landed Cost','Freight':'Fracht','Override freight':'Fracht überschreiben','Estimate only, not a binding quote. Duty is calculated on the CIF customs value (goods + insurance + freight); import VAT is charged on that value plus the duty.':'Nur Schätzung, kein verbindliches Angebot. Der Zoll wird auf den CIF-Zollwert berechnet (Ware + Versicherung + Fracht); die Einfuhr-MwSt. auf diesen Wert zuzüglich Zoll.',
+ 'Same shipment, costed across modes. Your estimator rate carries into its mode; enter rates for the others. Toggle off any mode that isn\'t possible for this route.':'Gleiche Sendung, über alle Verkehrsträger kalkuliert. Ihr Satz aus dem Rechner gilt für seinen Verkehrsträger; geben Sie die anderen ein. Schalten Sie jeden für diese Route unmöglichen Verkehrsträger ab.','Include':'Einschließen','per kg)':'pro kg)','Distance (':'Distanz (','(optional)':'(optional)','Transit days':'Laufzeit-Tage','per CBM)':'pro CBM)','per km)':'pro km)','Road uses the distance from the Route & mode section. Excluded modes are skipped. Cheapest included mode is flagged.':'Straße nutzt die Distanz aus dem Abschnitt Route & Verkehrsträger. Ausgeschlossene Verkehrsträger werden übersprungen. Der günstigste einbezogene Verkehrsträger wird markiert.','Bars show total landed cost for modes with a rate. Carbon footprint and transit show for every included mode.':'Balken zeigen die gesamte Landed Cost für Verkehrsträger mit Satz. CO₂-Fußabdruck und Laufzeit erscheinen für jeden einbezogenen Verkehrsträger.',
+ 'Quote #':'Angebot-Nr.','Quote date':'Angebotsdatum','Prepared by':'Erstellt von','— select —':'— auswählen —','Valid until (optional)':'Gültig bis (optional)','Quote name (optional)':'Angebotsname (optional)','Save quote':'Angebot speichern','Export PDF / Print':'PDF exportieren / Drucken','Quotation disclaimer / footer':'Angebots-Haftungsausschluss / Fußzeile','(prints at the bottom of the PDF)':'(erscheint unten im PDF)','Cost breakdown':'Kostenaufstellung','Procurement KPIs':'Beschaffungs-KPIs',
+ 'Export all (backup file)':'Alles exportieren (Sicherung)','Import backup':'Sicherung importieren','Designed & built by':'Entworfen & entwickelt von','← Back to calculator':'← Zurück zum Rechner',
+ 'Total landed cost':'Landed Cost gesamt','Cost per unit':'Kosten pro Einheit','Logistics uplift':'Logistik-Aufschlag','Duty + tax':'Zoll + Steuer','Transit':'Laufzeit','Air':'Luft','Sea':'See','Road':'Straße',
+ 'Freight cost estimate':'Frachtkostenschätzung','Supplying entity':'Lieferant','Buying entity':'Käufer','Quote:':'Angebot:','Date:':'Datum:','Prepared by:':'Erstellt von:','Valid until:':'Gültig bis:','Route:':'Route:','Mode:':'Verkehrsträger:','Units:':'Einheiten:','Weight:':'Gewicht:','Volume:':'Volumen:','Product cost':'Produktkosten','Origin charges':'Ursprungsgebühren','Insurance':'Versicherung','Duty':'Zoll','VAT / GST':'MwSt. / USt.','Total landed':'Landed Cost gesamt','Logistics uplift over goods':'Logistik-Aufschlag auf Warenwert','FX':'Wechselkurs','Generated':'Erstellt am',
+ 'Load & edit':'Laden & bearbeiten','Delete':'Löschen','Draft':'Entwurf','Final':'Endgültig','created by':'erstellt von','revised by':'überarbeitet von','Showing:':'Anzeige:','prepared by':'erstellt von','Unsaved estimate':'Nicht gespeicherte Schätzung','manual':'manuell',
+ 'verified by Apps Script once connected':'wird von Apps Script geprüft, sobald verbunden','Your Company Ltd':'Ihre Firma GmbH','New name':'Neuer Name','Supplier Co. Ltd':'Lieferant GmbH','Street, city, country':'Straße, Stadt, Land','Contact person':'Ansprechpartner','Phone':'Telefon','Email':'E-Mail','amount':'Betrag','rate':'Satz','route dist':'Streckendist.','e.g. Acme – spring order':'z.B. Acme – Frühjahrsbestellung','Company logo — set in admin':'Firmenlogo — im Admin festlegen','Dismiss':'Schließen'},
+ it:{'Set up the admin':'Configura l\'amministratore','No admin exists yet. Create the first admin account — you become the owner and can add everyone else.':'Non esiste ancora un amministratore. Crea il primo account amministratore — diventi il proprietario e puoi aggiungere tutti gli altri.','Your name':'Il tuo nome','Create password':'Crea password','Confirm password':'Conferma password','Create admin':'Crea amministratore','Select your name and enter your password.':'Seleziona il tuo nome e inserisci la password.','Password':'Password','Create your password':'Crea la tua password','Signing in as':'Accesso come','for the first time.':'per la prima volta.','Choose a password you will use every time from now on.':'Scegli una password che userai ogni volta d\'ora in poi.','New password':'Nuova password','Set password & sign in':'Imposta password e accedi','Back':'Indietro','Owner':'Proprietario','Admin':'Admin','User':'Utente','Delete quotes':'Elimina preventivi','Edit currency':'Modifica valuta','Edit VAT':'Modifica IVA','Edit disclaimer':'Modifica clausola','Edit CO₂':'Modifica CO₂','Edit charges':'Modifica costi','All permissions':'Tutte le autorizzazioni','no password yet':'nessuna password','Reset password':'Reimposta password','Remove':'Rimuovi','No users yet':'Nessun utente','Pick your name.':'Scegli il tuo nome.','Enter your password.':'Inserisci la password.','Passwords do not match.':'Le password non corrispondono.','Password must be at least 6 characters.':'La password deve contenere almeno 6 caratteri.','Enter a name.':'Inserisci un nome.','Incorrect password.':'Password errata.','Could not reach the backend. Check the URL.':'Impossibile raggiungere il backend. Controlla l\'URL.','Admins only.':'Solo amministratori.','Reset password for ':'Reimposta la password per ','Remove ':'Rimuovi ','over goods value':'sul valore merce','excluded':'esclusa','enter a rate for cost':'inserisci una tariffa per il costo','cheapest':'più economica','unsaved':'non salvato','← Back to calculator':'← Torna al calcolatore','Guide & glossary':'Guida e glossario','Read this once and the rest of the tool will make sense. It explains what every number means, how a landed cost is built, which figures are solid and which are estimates, and the values used behind the scenes.':'Leggi questo una volta e il resto dello strumento avrà senso. Spiega cosa significa ogni numero, come si costruisce un costo a destino, quali cifre sono solide e quali sono stime, e i valori usati dietro le quinte.','What this tool is':'Cos’è questo strumento','A landed-cost estimator for buyers without a transport management system. You enter your own freight rate and cargo, and it builds the full delivered cost — freight, insurance, customs duty, import VAT, and local charges — plus a mode comparison, carbon footprint, and a printable quotation. It is an':'Uno stimatore di costo a destino per acquirenti senza un sistema di gestione dei trasporti. Inserisci la tua tariffa di trasporto e la merce, e costruisce il costo di consegna completo — trasporto, assicurazione, dazio doganale, IVA all’importazione e costi locali — più un confronto tra modalità, l’impronta di carbonio e un preventivo stampabile. È una','estimate to support a decision, not a binding quote':'stima a supporto di una decisione, non un preventivo vincolante','. Treat the output as a well-structured first number, then confirm freight and duty with your forwarder and customs broker.':'. Considera il risultato come un primo numero ben strutturato, poi conferma trasporto e dazio con il tuo spedizioniere e doganalista.','How a landed-cost number is built (in order)':'Come si costruisce un costo a destino (in ordine)','1. Cargo':'1. Merce','Every product row is summed into total weight and total volume.':'Ogni riga prodotto è sommata in peso totale e volume totale.','2. Chargeable weight / volume':'2. Peso / volume tassabile','Converted to what carriers actually bill: air uses volumetric weight (volume in cm³ ÷ 6000), sea LCL uses the revenue ton (the greater of cubic metres or tonnes), and sea FCL / road work out how many containers or trucks the cargo fills.':'Convertito in ciò che i vettori fatturano davvero: l’aereo usa il peso volumetrico (volume in cm³ ÷ 6000), il mare LCL usa la revenue ton (il maggiore tra metri cubi o tonnellate), e mare FCL / strada calcolano quanti container o camion riempie la merce.','3. Freight':'3. Trasporto','Chargeable amount × your rate, or the minimum charge if that is higher. For FCL/road it is number of units × rate.':'Quantità tassabile × la tua tariffa, o il costo minimo se più alto. Per FCL/strada è numero di unità × tariffa.','4. Insurance':'4. Assicurazione','Goods value × your insurance % × 1.1 (the customary “CIF + 10%” basis).':'Valore merce × la tua assicurazione % × 1,1 (la consueta base „CIF + 10%“).','5. Customs value (CIF)':'5. Valore doganale (CIF)','Goods + freight + insurance. This is the value duty is charged on.':'Merce + trasporto + assicurazione. È il valore su cui si calcola il dazio.','6. Duty':'6. Dazio','Each product’s own duty % applied to its share of the customs value, then added up.':'Il dazio % di ciascun prodotto applicato alla sua quota del valore doganale, poi sommato.','7. Import VAT / GST':'7. IVA all’importazione','Your VAT % applied to (customs value + duty).':'La tua IVA % applicata a (valore doganale + dazio).','8. Local charges':'8. Costi locali','Origin and destination charges are added or excluded depending on the Incoterm.':'I costi di origine e destinazione sono aggiunti o esclusi a seconda dell’Incoterm.','9. Landed cost':'9. Costo a destino','The sum of the lines your Incoterm makes you responsible for. Lines the supplier covers are struck out and excluded.':'La somma delle voci di cui il tuo Incoterm ti rende responsabile. Le voci coperte dal fornitore sono barrate ed escluse.','How transit days are estimated':'Come si stimano i giorni di transito','With no schedule API connected, transit is estimated as':'Senza un’API di orari collegata, il transito è stimato come','distance ÷ an effective daily pace + a fixed handling buffer':'distanza ÷ un ritmo giornaliero effettivo + un buffer fisso di movimentazione',', floored at a sensible minimum. The pace is deliberately below top speed because it bakes in real-world limits (driver-hour rules, port dwell, waiting for the next flight); the buffer covers loading, terminal handling and customs at both ends.':', con un minimo ragionevole. Il ritmo è volutamente sotto la velocità massima perché incorpora limiti reali (regole sulle ore di guida, sosta in porto, attesa del volo successivo); il buffer copre carico, movimentazione al terminal e dogana a entrambi i lati.','Air':'Aereo','estimate':'stima','round(distance ÷ 4000) + 2 days, minimum 2. A 9,000 km lane ≈ 4 days. The low pace reflects that air-freight time is dominated by handling and consolidation, not flight hours.':'round(distanza ÷ 4000) + 2 giorni, minimo 2. Una tratta di 9.000 km ≈ 4 giorni. Il ritmo basso riflette che il tempo aereo è dominato da movimentazione e consolidamento, non dalle ore di volo.','Sea':'Mare','round(distance ÷ 700) + 6 days, minimum 5. A 19,000 km Asia–Europe lane ≈ 33 days, in the usual 30–40 day range.':'round(distanza ÷ 700) + 6 giorni, minimo 5. Una tratta Asia–Europa di 19.000 km ≈ 33 giorni, nel consueto intervallo di 30–40 giorni.','Road':'Strada','round(distance ÷ 600) + 1 day, minimum 1. A 1,200 km lane ≈ 3 days.':'round(distanza ÷ 600) + 1 giorno, minimo 1. Una tratta di 1.200 km ≈ 3 giorni.','Typing a transit number yourself overrides the estimate and is treated as a real figure. Admin lane times (once the backend is connected) replace the formula with your own door-to-door times per route.':'Inserire tu stesso un numero di transito sovrascrive la stima ed è trattato come una cifra reale. I tempi per tratta in Admin (una volta connesso il backend) sostituiscono la formula con i tuoi tempi porta-a-porta per rotta.','How the carbon footprint is calculated':'Come si calcola l’impronta di carbonio','Manual mode (default, free):':'Modalità manuale (predefinita, gratuita):','emissions = cargo weight in tonnes × distance in km × a per-mode factor. The built-in factors are Air 0.6, Sea 0.016, Road 0.1 kg CO₂e per tonne-km (DEFRA / GLEC aligned), and they are editable in Admin so you can drop in your own source.':'emissioni = peso merce in tonnellate × distanza in km × un fattore per modalità. I fattori integrati sono Aereo 0,6, Mare 0,016, Strada 0,1 kg CO₂e per tonnellata-km (allineati DEFRA / GLEC), e sono modificabili in Admin così puoi inserire la tua fonte.','EcoFreight mode (optional, needs backend):':'Modalità EcoFreight (opzionale, richiede backend):','when switched on in Admin and the Apps Script backend is connected with an API key, the app sends origin, destination, weight and mode to EcoFreight for GLEC v3.2 / ISO 14083 leg-by-leg emissions, and falls back to the manual factors if the service is unavailable or over its monthly free quota.':'quando attivata in Admin e il backend Apps Script è connesso con una chiave API, l’app invia origine, destinazione, peso e modalità a EcoFreight per le emissioni tratta-per-tratta GLEC v3.2 / ISO 14083, e ricorre ai fattori manuali se il servizio non è disponibile o supera la quota gratuita mensile.','Either way the carbon number is an':'In entrambi i casi il numero di carbonio è una','— useful for comparing modes, not a measured figure.':'— utile per confrontare le modalità, non una cifra misurata.','Sea distance in nautical miles':'Distanza marittima in miglia nautiche','Sea distances are often quoted in nautical miles. In the Comparison tab’s Sea card, the “Have nautical miles?” helper converts them for you (1 NM = 1.852 km) and fills the distance field in your current unit, which then feeds both the freight and the emissions calculation.':'Le distanze marittime sono spesso indicate in miglia nautiche. Nella scheda Mare del tab Confronto, l’aiuto „Hai miglia nautiche?“ le converte per te (1 NM = 1,852 km) e compila il campo distanza nella tua unità attuale, che poi alimenta sia il calcolo del trasporto sia quello delle emissioni.','Genuine figures vs estimates':'Cifre reali vs stime','This is the most important section. Use the genuine numbers with confidence; treat the estimates as planning figures to verify.':'Questa è la sezione più importante. Usa le cifre reali con fiducia; tratta le stime come valori di pianificazione da verificare.','Genuine':'Reale','from your input / definite':'dal tuo input / certo','Goods value, duty %, VAT %, your freight rate, your min charge, origin/destination charges, insurance %, the Incoterm allocation rules, the CIF customs method, and all the arithmetic that combines them. If your inputs are right, these are right.':'Valore merce, dazio %, IVA %, la tua tariffa di trasporto, il tuo costo minimo, costi origine/destinazione, assicurazione %, le regole di ripartizione Incoterm, il metodo doganale CIF e tutta l’aritmetica che li combina. Se i tuoi dati sono corretti, questi sono corretti.','Estimated':'Stimato','modelled / will vary':'modellato / varierà','Chargeable weight (depends on how the cargo is actually packed), the number of containers/trucks and the stacking fit (modelled from your dimensions and a packing-efficiency assumption), the carbon footprint (a generic factor × distance × weight), transit days (distance-based), and the FX rate (live, but it moves). The real carrier invoice can differ.':'Peso tassabile (dipende da come la merce è effettivamente imballata), il numero di container/camion e l’incastro di impilamento (modellati dalle tue dimensioni e da un’ipotesi di efficienza di carico), l’impronta di carbonio (un fattore generico × distanza × peso), i giorni di transito (basati sulla distanza) e il tasso di cambio (live, ma variabile). La fattura reale del vettore può differire.','Glossary':'Glossario','Chargeable weight':'Peso tassabile','The figure a carrier bills on — the greater of actual weight and a volume-based weight, so light bulky cargo isn’t under-charged.':'La cifra su cui fattura un vettore — il maggiore tra peso effettivo e un peso basato sul volume, così la merce leggera e voluminosa non è sottostimata.','Volumetric (dimensional) weight':'Peso volumetrico (dimensionale)','Volume converted to a weight using a divisor; here 6000 cm³/kg for air.':'Volume convertito in peso usando un divisore; qui 6000 cm³/kg per l’aereo.','Revenue ton (sea LCL)':'Revenue ton (mare LCL)','Sea LCL is billed per the larger of cubic metres or tonnes (minimum 1).':'Il mare LCL è fatturato sul maggiore tra metri cubi o tonnellate (minimo 1).','LCL / FCL':'LCL / FCL','Less-than-Container Load (you share a box) vs Full-Container Load (you book a whole container).':'Less-than-Container Load (condividi un container) vs Full-Container Load (prenoti un intero container).','Stacking levels':'Livelli di impilamento','How many layers of cargo can be stacked inside a container/truck (single/double/triple), which changes how much fits.':'Quanti strati di merce si possono impilare in un container/camion (singolo/doppio/triplo), il che cambia quanto entra.','Packing efficiency':'Efficienza di carico','Real loads never fill 100% of a box; the tool assumes 85% usable space.':'I carichi reali non riempiono mai il 100% di un container; lo strumento assume l’85% di spazio utilizzabile.','CIF':'CIF','Cost, Insurance & Freight — the value (goods + freight + insurance) that customs duty is calculated on.':'Cost, Insurance & Freight — il valore (merce + trasporto + assicurazione) su cui si calcola il dazio doganale.','Incoterm':'Incoterm','The rule that splits costs and risk between supplier and buyer (e.g. EXW, FOB, CIF, DDP). It decides which lines you actually pay.':'La regola che ripartisce costi e rischio tra fornitore e acquirente (es. EXW, FOB, CIF, DDP). Decide quali voci paghi effettivamente.','Duty':'Dazio','Import tax set by the destination country, based on the product’s HS code, applied to the customs value.':'Imposta all’importazione fissata dal paese di destinazione, in base al codice HS del prodotto, applicata al valore doganale.','Import VAT / GST':'IVA all’importazione','Consumption tax charged on (customs value + duty) at import.':'Imposta sui consumi applicata su (valore doganale + dazio) all’importazione.','Carbon footprint (CO₂e)':'Impronta di carbonio (CO₂e)','Estimated transport emissions: weight × distance × a per-mode factor.':'Emissioni di trasporto stimate: peso × distanza × un fattore per modalità.','Landed cost':'Costo a destino','The total delivered cost of getting the goods to your door under the chosen Incoterm.':'Il costo di consegna totale per portare la merce alla tua porta secondo l’Incoterm scelto.','Logistics uplift':'Sovrapprezzo logistico','How much the landed cost exceeds the bare goods value, as a %.':'Di quanto il costo a destino supera il valore puro della merce, in %.','Values used in the engine':'Valori usati nel motore','Defaults below; the ones marked editable can be changed in Admin (☰, top-left).':'Valori predefiniti qui sotto; quelli contrassegnati come modificabili si cambiano in Admin (☰, in alto a sinistra).','Air volumetric divisor':'Divisore volumetrico aereo','6000 cm³ per kg.':'6000 cm³ per kg.','Sea LCL revenue ton':'Revenue ton mare LCL','max(cubic metres, tonnes), minimum 1.':'max(metri cubi, tonnellate), minimo 1.','CO₂ factors':'Fattori CO₂','editable':'modificabile','Air 0.6, Sea 0.016, Road 0.1 kg CO₂e per tonne-km (DEFRA / GLEC aligned). Air is far higher than sea by design.':'Aereo 0,6, Mare 0,016, Strada 0,1 kg CO₂e per tonnellata-km (allineati DEFRA / GLEC). L’aereo è di gran lunga più alto del mare per natura.','Insurance basis':'Base assicurativa','value × insurance % × 1.1 (CIF + 10%).':'valore × assicurazione % × 1,1 (CIF + 10%).','Duty & VAT':'Dazio e IVA','Duty on the CIF customs value, per product; VAT on (customs value + duty).':'Dazio sul valore doganale CIF, per prodotto; IVA su (valore doganale + dazio).','editable soon':'presto modificabile','85% of internal volume usable; stacked layers capped by the tallest item’s height.':'85% del volume interno utilizzabile; gli strati impilati sono limitati dall’altezza dell’articolo più alto.','Container internals (L×W×H cm / payload kg)':'Interni container (L×P×A cm / portata kg)','20’GP 589·234·239 / 28200; 40’GP 1203·234·239 / 28800; 40’HC 1203·234·269 / 28600; 45’HC 1355·234·269 / 27700.':'20’GP 589·234·239 / 28200; 40’GP 1203·234·239 / 28800; 40’HC 1203·234·269 / 28600; 45’HC 1355·234·269 / 27700.','Truck internals':'Interni camion','From small van up to 13.6 m semi-trailer and mega-trailer.':'Dal piccolo furgone fino al semirimorchio da 13,6 m e al mega-trailer.','Transit estimate':'Stima del transito','Rough, distance-based per mode; replaced by your real lane times once the Transit table is set in Admin.':'Approssimativa, basata sulla distanza per modalità; sostituita dai tuoi tempi reali per tratta una volta impostata la tabella Transiti in Admin.','FX':'Cambio','Live daily ECB reference rate, with a manual override.':'Tasso di riferimento BCE giornaliero (live), con override manuale.','Enter a rate for cost':'Inserisci una tariffa per il costo','per container)':'per container)','Final':'Definitivo','Draft':'Bozza','created by':'creato da','revised by':'revisionato da','Load & edit':'Carica e modifica','Delete':'Elimina','No saved quotations yet. Open the Quotation (PDF) tab and click “Save quote”.':'Nessun preventivo salvato. Apri la scheda „Preventivo (PDF)“ e clicca su „Salva preventivo“.','Saved to the shared Google Sheet — visible to everyone, with version history.':'Salvato nel Google Sheet condiviso — visibile a tutti, con cronologia versioni.','Held in this session for now — these save to the shared Google Sheet once the backend is connected.':'Per ora solo in questa sessione — verranno salvati nel Google Sheet condiviso una volta connesso il backend.','You have an unfinished draft:':'Hai una bozza non completata:','It hasn\'t been exported to PDF yet, so it isn\'t final.':'Non è ancora stato esportato in PDF, quindi non è definitivo.','Don\'t show again':'Non mostrare più','product':'merce','origin/export':'origine/export','freight':'trasporto','insurance':'assicurazione','destination':'destinazione','duty & tax':'dazio e imposte','Under':'Con','you pay:':'paghi:','Supplier covers:':'Il fornitore copre:','Struck-through lines below are the supplier’s.':'Le righe barrate qui sotto sono a carico del fornitore.','Chargeable = the greater of actual weight or volumetric weight (volume × 1,000,000 ÷ 6000). Your per-kg rate is applied to it.':'Tassabile = il maggiore tra peso effettivo e peso volumetrico (volume × 1.000.000 ÷ 6000). Si applica la tua tariffa per kg.','Chargeable = revenue ton: the greater of volume (CBM) or weight (tonnes), minimum 1. Your per-CBM rate is applied to it.':'Tassabile = revenue ton: il maggiore tra volume (CBM) o peso (tonnellate), minimo 1. Si applica la tua tariffa per CBM.','Chargeable = containers needed, from how your items stack into the selected container (limited by volume, weight and stacking).':'Tassabile = container necessari, in base a come i tuoi articoli si impilano nel container scelto (limitato da volume, peso e impilamento).','Chargeable = trucks needed, from how your items stack into the selected truck body; freight = trucks × distance × your per-distance rate.':'Tassabile = camion necessari, in base a come i tuoi articoli si impilano nel tipo di camion scelto; trasporto = camion × distanza × la tua tariffa per distanza.','cont':'cont.','high':'alti','items too tall':'articoli troppo alti','truck(s)':'camion','pallet(s)':'pallet','(auto)':'(auto)','units':'unità','unit':'unità','Chargeable':'Tassabile','units per':'unità per','truck':'camion','container':'container','at':'a','needed':'necessari','supplier':'fornitore','Duty (per product)':'Dazio (per prodotto)','Total landed (your cost)':'Totale a destino (i tuoi costi)','edited':'modificato','%s applies to sea / inland-waterway only. For %s, use FCA, CPT, CIP, DAP, or DDP.':'%s vale solo per via marittima/navigazione interna. Per %s usa FCA, CPT, CIP, DAP o DDP.','Container only %s% full — LCL is likely cheaper at this volume.':'Container pieno solo al %s% — a questo volume LCL è probabilmente più economico.','Items are taller than the selected %s — they will not fit. Choose a taller body or reduce item height.':'Gli articoli sono più alti del %s selezionato — non entrano. Scegli un mezzo più alto o riduci l\'altezza degli articoli.','Selected %s height allows only %s layer(s); %s-stacking will not fully fit.':'L\'altezza del %s selezionato consente solo %s strato/i; l\'impilamento %s non entra del tutto.','Minimum charge applied.':'Costo minimo applicato.','DDP — supplier covers duty & tax, so they\'re excluded from your cost.':'DDP — il fornitore copre dazio e imposte, quindi sono esclusi dai tuoi costi.','Excluded for this route':'Esclusa per questa tratta','days':'giorni','(est.)':'(stim.)','Cheapest':'Più economica','double':'doppio','triple':'triplo','Your Company':'La tua azienda','Freight Cost Estimator':'Calcolatore costi di trasporto','Sign in':'Accedi','Select your name and enter your PIN. Admins enter the admin password.':'Seleziona il tuo nome e inserisci il PIN. Gli admin inseriscono la password admin.','Name':'Nome','PIN / password':'PIN / password','Enter':'Accedi','Use locally without backend':'Usa localmente senza backend','Backend':'Backend','Backend Web App URL':'URL Web App backend','Test connection':'Prova connessione','Disconnect':'Disconnetti','Save all settings to Sheet':'Salva tutte le impostazioni nel foglio','(set in admin)':'(da impostare in Admin)','This is a live page — if you refresh or close the tab, any unsaved work is lost. Save your quote when you\'re done (it stays in Saved Quotes for this session, and in the shared Sheet once the backend is connected).':'Questa è una pagina live — se aggiorni o chiudi la scheda, il lavoro non salvato va perso. Salva il preventivo quando hai finito (resta in „Preventivi salvati“ per questa sessione e nel foglio condiviso una volta connesso il backend).','Van / Sprinter (4.2×1.8×1.9 m · 1.2 t)':'Furgone / Sprinter (4.2×1.8×1.9 m · 1.2 t)','7.5 t box (6.0×2.4×2.4 m · 2.8 t)':'Furgone 7,5 t (6.0×2.4×2.4 m · 2.8 t)','12 t box (7.2×2.45×2.45 m · 6 t)':'Furgone 12 t (7.2×2.45×2.45 m · 6 t)','18 t box (9.2×2.45×2.5 m · 10 t)':'Furgone 18 t (9.2×2.45×2.5 m · 10 t)','Semi-trailer 13.6 m (13.6×2.45×2.7 m · 24 t)':'Semirimorchio 13,6 m (13.6×2.45×2.7 m · 24 t)','Mega trailer 13.6 m (13.6×2.48×3.0 m · 24 t)':'Mega trailer 13,6 m (13.6×2.48×3.0 m · 24 t)','Same shipment, costed across modes. Your estimator rate carries into its mode; enter rates for the others. Toggle off any mode that isn\'t possible for this route.':'Stessa spedizione, calcolata su tutte le modalità. La tariffa del calcolatore viene riportata nella sua modalità; inserisci le tariffe per le altre. Disattiva qualsiasi modalità non possibile per questa tratta.','Estimator':'Calcolatore','Comparison':'Confronto','Dashboard':'Pannello','Quotation (PDF)':'Preventivo (PDF)','Saved Quotes':'Preventivi salvati','Guide':'Guida','About':'Informazioni',
+ 'Parties':'Parti','Route & mode':'Tratta e modalità','Products':'Prodotti','Cargo & packing':'Merce e imballaggio','Value, duty & terms':'Valore, dazi e termini','Your freight rate':'La tua tariffa',
+ 'Cost composition (your cost)':'Composizione dei costi (i tuoi costi)','Mode comparison':'Confronto modalità','Saved quotations':'Preventivi salvati',
+ 'Admin settings':'Impostazioni admin','Language':'Lingua','Open guide & glossary':'Apri guida e glossario','Admin password':'Password admin','Company profile':'Profilo azienda','Company name':'Nome azienda','Company address':'Indirizzo azienda','Default currency':'Valuta predefinita','Default VAT %':'IVA predefinita %','Quote number prefix':'Prefisso numero preventivo','No logo uploaded':'Nessun logo caricato','Company logo':'Logo azienda','CO₂ factors (kg CO₂e per tonne-km)':'Fattori CO₂ (kg CO₂e per tonnellata-km)','Default charges':'Costi predefiniti','Origin':'Origine','Destination':'Destinazione','Insurance %':'Assicurazione %','Display & sources':'Visualizzazione e fonti','Transit time':'Tempo di transito','Show transit days in the calculator & PDF':'Mostra i giorni di transito nel calcolatore e PDF','Carbon footprint':'Impronta di carbonio','Show CO₂e in the calculator & PDF':'Mostra CO₂e nel calcolatore e PDF','Carbon footprint source':'Fonte impronta di carbonio','Manual factors (built-in, free)':'Fattori manuali (integrati, gratis)','EcoFreight API — needs backend':'API EcoFreight — richiede backend','Users (Prepared by)':'Utenti (Preparato da)','+ Add user':'+ Aggiungi utente','Coming with the backend':'In arrivo con il backend',
+ 'Preview mode — changes apply to this session only. Connect the Apps Script backend to sign in, manage users, and save settings for everyone.':'Modalità anteprima — le modifiche valgono solo per questa sessione. Collega il backend Apps Script per accedere, gestire gli utenti e salvare le impostazioni per tutti.',
+ 'Per-user permissions, plus container/truck catalogue & lane transit times, become editable here, and every setting saves to the shared Google Sheet — guarded by the admin password and stamped with who changed what and when.':'Qui diventano modificabili i permessi per utente, il catalogo container/camion e i tempi di transito per tratta, e ogni impostazione viene salvata nel foglio Google condiviso — protetta dalla password admin e con traccia di chi ha modificato cosa e quando.',
+ 'Main currency':'Valuta principale','Alternate currency':'Valuta alternativa','(none)':'(nessuna)','Exchange rate':'Tasso di cambio','Units':'Unità','Metric':'Metrico','Imperial':'Imperiale',
+ 'Not saved automatically.':'Non salvato automaticamente.',"This is a live page — if you refresh or close the tab, any unsaved work is lost. Save your quote when you're done (it stays in Saved Quotes for this session, and in the shared Sheet once the backend is connected).":'Questa è una pagina live — se aggiorni o chiudi la scheda, il lavoro non salvato va perso. Salva il preventivo quando hai finito (resta in Preventivi salvati per questa sessione e nel foglio condiviso una volta collegato il backend).',
+ '+ New quotation':'+ Nuovo preventivo','Supplying entity (supplier)':'Parte fornitrice (fornitore)','Buying entity (buyer)':'Parte acquirente (acquirente)','Supplying entity address':'Indirizzo parte fornitrice','Buying entity / delivery address':'Parte acquirente / indirizzo di consegna','Supplier contact (optional)':'Contatto fornitore (opzionale)','Buyer contact (optional)':'Contatto acquirente (opzionale)','Supplier phone (optional)':'Telefono fornitore (opzionale)','Buyer phone (optional)':'Telefono acquirente (opzionale)','Supplier email (optional)':'Email fornitore (opzionale)','Buyer email (optional)':'Email acquirente (opzionale)',
+ 'Transport mode':'Modalità di trasporto','Ocean service':'Servizio marittimo','Truck body':'Tipo di camion','Stacking level':'Livelli di impilamento','Single':'Singolo','Double':'Doppio','Triple':'Triplo','How many items can be stacked vertically. Capped by item height vs the container/truck internal height.':'Quanti colli si possono impilare in verticale. Limitato dall\'altezza del collo rispetto all\'altezza interna del container/camion.','Container':'Container','Route distance (':'Distanza tratta (','Drives road cost, carbon footprint and transit estimates. Approximate is fine.':'Determina costo su strada, impronta di carbonio e stime di transito. Un valore approssimativo va bene.',
+ 'Products':'Prodotti','+ Add product':'+ Aggiungi prodotto','Each product carries its own HS code and Duty %. Freight & insurance are split across products by value; VAT is a single destination rate (set below).':'Ogni prodotto ha il proprio codice HS e dazio %. Trasporto e assicurazione sono ripartiti tra i prodotti in base al valore; l\'IVA è un\'unica aliquota a destino (impostata sotto).',
+ 'Cargo & packing':'Merce e imballaggio','Pallet type':'Tipo di pallet','Std 120×100 cm':'Std 120×100 cm','Loaded pallet height (':'Altezza pallet caricato (','Pallets needed':'Pallet necessari','Leave blank to auto-estimate from product volume.':'Lascia vuoto per stimare automaticamente dal volume dei prodotti.',
+ 'Cargo value (':'Valore merce (','VAT / GST %':'IVA %','Rate (':'Tariffa (','Basis':'Base','per CBM':'per CBM','per kg':'per kg','per container':'per container','per km':'per km','Min charge (':'Costo minimo (','Origin charges (':'Costi origine (','Destination charges (':'Costi destinazione (','From your forwarder quote — the tool builds the full landed cost from this.':'Dal preventivo dello spedizioniere — lo strumento costruisce il costo totale a destino da qui.',
+ 'Estimated landed cost':'Costo a destino stimato','Freight':'Trasporto','Override freight':'Sovrascrivi trasporto','Estimate only, not a binding quote. Duty is calculated on the CIF customs value (goods + insurance + freight); import VAT is charged on that value plus the duty.':'Solo stima, non un preventivo vincolante. Il dazio è calcolato sul valore doganale CIF (merce + assicurazione + trasporto); l\'IVA all\'importazione su tale valore più il dazio.',
+ 'Same shipment, costed across modes. Your estimator rate carries into its mode; enter rates for the others. Toggle off any mode that isn\'t possible for this route.':'Stessa spedizione, valutata su tutte le modalità. La tua tariffa del calcolatore vale per la sua modalità; inserisci le altre. Disattiva le modalità non possibili per questa tratta.','Include':'Includi','per kg)':'per kg)','Distance (':'Distanza (','(optional)':'(opzionale)','Transit days':'Giorni di transito','per CBM)':'per CBM)','per km)':'per km)','Road uses the distance from the Route & mode section. Excluded modes are skipped. Cheapest included mode is flagged.':'La strada usa la distanza della sezione Tratta e modalità. Le modalità escluse vengono saltate. La modalità inclusa più economica viene evidenziata.','Bars show total landed cost for modes with a rate. Carbon footprint and transit show for every included mode.':'Le barre mostrano il costo totale a destino per le modalità con tariffa. Impronta di carbonio e transito appaiono per ogni modalità inclusa.',
+ 'Quote #':'N. preventivo','Quote date':'Data preventivo','Prepared by':'Preparato da','— select —':'— seleziona —','Valid until (optional)':'Valido fino al (opzionale)','Quote name (optional)':'Nome preventivo (opzionale)','Save quote':'Salva preventivo','Export PDF / Print':'Esporta PDF / Stampa','Quotation disclaimer / footer':'Dichiarazione / piè di pagina del preventivo','(prints at the bottom of the PDF)':'(stampato in fondo al PDF)','Cost breakdown':'Dettaglio costi','Procurement KPIs':'KPI di acquisto',
+ 'Export all (backup file)':'Esporta tutto (backup)','Import backup':'Importa backup','Designed & built by':'Progettato e sviluppato da','← Back to calculator':'← Torna al calcolatore',
+ 'Total landed cost':'Costo totale a destino','Cost per unit':'Costo per unità','Logistics uplift':'Sovrapprezzo logistico','Duty + tax':'Dazi + imposte','Transit':'Transito','Air':'Aereo','Sea':'Mare','Road':'Strada',
+ 'Freight cost estimate':'Stima dei costi di trasporto','Supplying entity':'Fornitore','Buying entity':'Acquirente','Quote:':'Preventivo:','Date:':'Data:','Prepared by:':'Preparato da:','Valid until:':'Valido fino al:','Route:':'Tratta:','Mode:':'Modalità:','Units:':'Unità:','Weight:':'Peso:','Volume:':'Volume:','Product cost':'Costo prodotto','Origin charges':'Costi origine','Insurance':'Assicurazione','Duty':'Dazio','VAT / GST':'IVA','Total landed':'Totale a destino','Logistics uplift over goods':'Sovrapprezzo logistico sul valore','FX':'Cambio','Generated':'Generato il',
+ 'Load & edit':'Carica e modifica','Delete':'Elimina','Draft':'Bozza','Final':'Definitivo','created by':'creato da','revised by':'revisionato da','Showing:':'Visualizzazione:','prepared by':'preparato da','Unsaved estimate':'Stima non salvata','manual':'manuale',
+ 'verified by Apps Script once connected':'verificato da Apps Script una volta collegato','Your Company Ltd':'La tua azienda Srl','New name':'Nuovo nome','Supplier Co. Ltd':'Fornitore Srl','Street, city, country':'Via, città, paese','Contact person':'Referente','Phone':'Telefono','Email':'Email','amount':'importo','rate':'tariffa','route dist':'dist. tratta','e.g. Acme – spring order':'es. Acme – ordine primavera','Company logo — set in admin':'Logo azienda — imposta in admin','Dismiss':'Chiudi'}
+};
+function t(x){return (LANG!=='en'&&I18N[LANG]&&I18N[LANG][x])||x;}
+function tf(){var a=arguments,r=t(a[0]);for(var i=1;i<a.length;i++)r=r.replace('%s',a[i]);return r;}
+function modeWord(m){return t(m==='air'?'Air':m==='road'?'Road':'Sea');}
+function isT(k){return Object.prototype.hasOwnProperty.call(I18N.de,k);}
+function applyLang(){
+  var w=document.createTreeWalker(document.body,NodeFilter.SHOW_TEXT,null);var n;
+  while(n=w.nextNode()){
+    var p=n.parentNode;if(!p)continue;
+    if(p.nodeName==='SCRIPT'||p.nodeName==='STYLE')continue;
+    if(n.__skip)continue;
+    if(n.__en===undefined){var k0=n.nodeValue.replace(/\s+/g,' ').trim();if(!k0||!isT(k0)){n.__skip=true;continue;}n.__en=n.nodeValue;}
+    var key=n.__en.replace(/\s+/g,' ').trim();
+    var tr=(LANG!=='en'&&I18N[LANG]&&I18N[LANG][key]);
+    if(tr){var lead=(n.__en.match(/^\s*/)||[''])[0],trail=(n.__en.match(/\s*$/)||[''])[0];n.nodeValue=lead+tr+trail;}else{n.nodeValue=n.__en;}
+  }
+  document.querySelectorAll('[placeholder]').forEach(function(e){if(e.dataset.enph===undefined)e.dataset.enph=e.getAttribute('placeholder');var k=e.dataset.enph,tr=(LANG!=='en'&&I18N[LANG]&&I18N[LANG][k]);e.setAttribute('placeholder',tr||k);});
+  document.querySelectorAll('[title]').forEach(function(e){if(e.dataset.entitle===undefined)e.dataset.entitle=e.getAttribute('title');var k=e.dataset.entitle,tr=(LANG!=='en'&&I18N[LANG]&&I18N[LANG][k]);e.setAttribute('title',tr||k);});
+  if(typeof updateCmpLabels==='function')updateCmpLabels();if(typeof renderSaved==='function')renderSaved();if(typeof compute==='function')compute();else if(typeof renderDashboard==='function')renderDashboard();
+}
+function applyVis(){compute();renderDashboard();}
+function showView(v){
+  state.view=v;
+  document.querySelectorAll('.tabs button').forEach(b=>b.classList.toggle('on',b.dataset.view===v));
+  ['estimator','comparison','dashboard','quote','saved','guide'].forEach(x=>{const el=$('view'+x.charAt(0).toUpperCase()+x.slice(1));if(el)el.style.display=v===x?'':'none';});
+  if(v==='dashboard'||v==='quote'){renderDashboard();}
+  if(v==='saved'){renderSaved();}
+  if(v==='estimator'){checkDrafts();}
+  if(v==='comparison'){
+    const m=state.mode;
+    const rf=document.querySelector('.cmp-rate[data-m="'+m+'"]');
+    if(rf&&!rf.value)rf.value=$('rate').value;
+    if(m==='sea'){document.querySelectorAll('.cmp-sea').forEach(b=>b.classList.toggle('on',b.dataset.sea===state.sea));}
+    updateCmpLabels(); compute();
+  }
+}
+
+async function fetchFx(){
+  const base=$('curBase').value, rep=$('curRep').value;
+  if(rep==='(none)'){$('fxStatus').innerHTML='Single currency';compute();return;}
+  if(base===rep){$('fxRate').value='1';$('fxStatus').innerHTML=`1 ${base} = <b>1</b> ${rep}`;compute();return;}
+  for(const u of [`https://api.frankfurter.dev/v1/latest?base=${base}&symbols=${rep}`,`https://api.frankfurter.app/latest?from=${base}&to=${rep}`]){
+    try{const r=await fetch(u);const d=await r.json();const v=d.rates&&d.rates[rep];if(v){$('fxRate').value=v.toFixed(4);$('fxStatus').innerHTML=`1 ${base} = <b>${v.toFixed(4)}</b> ${rep} · auto`;updateCmpLabels();compute();return;}}catch(e){}
+  }
+  $('fxStatus').innerHTML=`1 ${base} = <b>${num('fxRate')}</b> ${rep} <span class="fx-tag" title="Live rates auto-fetch once hosted; using your manual rate for now">manual</span>`;updateCmpLabels();compute();
+}
+
+document.querySelectorAll('.tabs button').forEach(b=>b.onclick=()=>showView(b.dataset.view));
+$('exportPdf').onclick=exportQuote;$('saveQuote').onclick=saveQuote;
+$('adminBtn').onclick=openAdmin;$('drawerOv').onclick=closeAdmin;$('adminClose').onclick=closeAdmin;
+$('adminLogo').onchange=onLogoFile;
+$('adminCompany').addEventListener('input',()=>{$('dbCompany').value=$('adminCompany').value;renderDashboard();});
+$('adminCur').addEventListener('change',()=>{$('curBase').value=$('adminCur').value;fetchFx();});
+$('adminVat').addEventListener('input',()=>{$('vatPct').value=$('adminVat').value;compute();});
+$('adminPrefix').addEventListener('input',()=>{QUOTEPREFIX=$('adminPrefix').value;});
+$('adminDisc').addEventListener('input',()=>{DISCLAIMER=$('adminDisc').value;renderDashboard();});
+$('adminCo2Air').addEventListener('input',()=>{CO2F.air=parseFloat($('adminCo2Air').value)||0;compute();});
+$('adminCo2Sea').addEventListener('input',()=>{CO2F.sea=parseFloat($('adminCo2Sea').value)||0;compute();});
+$('adminCo2Road').addEventListener('input',()=>{CO2F.road=parseFloat($('adminCo2Road').value)||0;compute();});
+$('adminOrig').addEventListener('input',()=>{$('originChg').value=$('adminOrig').value;compute();});
+$('adminDest').addEventListener('input',()=>{$('destChg').value=$('adminDest').value;compute();});
+$('adminIns').addEventListener('input',()=>{$('insPct').value=$('adminIns').value;compute();});
+$('adminAddUser').onclick=addUser;
+$('newQuote').onclick=newQuotation;
+$('langSel').onchange=()=>{LANG=$('langSel').value;applyLang();};
+$('openGuide').onclick=()=>{closeAdmin();showView('guide');};
+$('guideBack').onclick=()=>showView('estimator');
+$('refreshWarnX').onclick=()=>{$('refreshWarn').style.display='none';};
+document.querySelectorAll('[data-su]').forEach(function(b){b.onclick=function(){setSeaUnit(b.dataset.su);};});
+$('visTransit').onchange=()=>{VIS.transit=$('visTransit').checked;applyVis();};
+$('visCarbon').onchange=()=>{VIS.carbon=$('visCarbon').checked;applyVis();};
+$('carbonMode').onchange=()=>{CARBONMODE=$('carbonMode').value;$('carbonNote').textContent=CARBONMODE==='ecofreight'?'EcoFreight activates once the Apps Script backend is connected with your API key. Until then the calculator uses the manual factors.':'';};
+$('backupExport').onclick=exportBackup;
+$('backupImport').onclick=()=>$('backupFile').click();
+$('backupFile').onchange=importBackup;
+['dbCompany','dbQuoteNo','dbDate','dbValid'].forEach(id=>$(id).addEventListener('input',()=>renderDashboard()));
+$('dbPrep').addEventListener('change',()=>renderDashboard());
+try{$('dbDate').valueAsDate=new Date();}catch(e){}
+document.querySelectorAll('#modeSeg button').forEach(b=>b.onclick=()=>setMode(b.dataset.mode));
+document.querySelectorAll('#seaSeg button').forEach(b=>b.onclick=()=>setSea(b.dataset.sea));
+document.querySelectorAll('#stackSeg button').forEach(b=>b.onclick=()=>setStack(+b.dataset.s));
+document.querySelectorAll('.cmp-dist').forEach(el=>el.addEventListener('input',()=>{DIST[el.dataset.m]=el.value;compute();}));
+['container','truck'].forEach(id=>$(id).addEventListener('change',compute));
+document.querySelectorAll('[data-units]').forEach(b=>b.onclick=()=>switchUnits(b.dataset.units));
+document.querySelectorAll('.cmp-sea').forEach(b=>b.onclick=()=>setSea(b.dataset.sea));
+document.querySelectorAll('.cmp-rate,.cmp-tr').forEach(el=>el.addEventListener('input',()=>renderComparison()));
+document.querySelectorAll('.cmp-on').forEach(el=>el.addEventListener('change',()=>renderComparison()));
+$('rate').addEventListener('input',()=>{RATE[state.mode]=$('rate').value;const cf=document.querySelector('.cmp-rate[data-m="'+state.mode+'"]');if(cf)cf.value=$('rate').value;compute();});
+document.querySelectorAll('.cmp-rate').forEach(el=>el.addEventListener('input',()=>{const m=el.dataset.m;RATE[m]=el.value;if(m===state.mode)$('rate').value=el.value;compute();}));
+$('addProduct').onclick=()=>addProduct({});
+$('ovFreightChk').onchange=e=>{$('ovFreight').disabled=!e.target.checked;compute();};
+['curBase','curRep'].forEach(id=>$(id).addEventListener('change',fetchFx));
+['fxRate','origin','dest','container','distance','pallet','palletH','palletsOv','vatPct','incoterm','rateBasis','minCharge','originChg','destChg','insPct','shipName','consName','shipAddr','consAddr','shipContact','consContact','shipPhone','consPhone','shipEmail','consEmail'].forEach(id=>$(id).addEventListener('input',compute));
+
+setupUnit($('palletH'),'l');
+addProduct({name:'Sample product',hs:'8517.62',qty:1000,wt:0.5,l:40,w:30,h:25,val:50,duty:4});
+document.querySelector('.cmp-rate[data-m="sea"]').value=RATE.sea;
+DIST.air='9000'; var _ad=document.querySelector('.cmp-dist[data-m="air"]'); if(_ad)_ad.value='9000';
+$('adminCo2Air').value=CO2F.air;$('adminCo2Sea').value=CO2F.sea;$('adminCo2Road').value=CO2F.road;
+$('adminOrig').value=$('originChg').value;$('adminDest').value=$('destChg').value;$('adminIns').value=$('insPct').value;
+$('adminVat').value=$('vatPct').value;$('adminPrefix').value=QUOTEPREFIX;$('adminDisc').value=DISCLAIMER;
+/* ===== Backend integration (Apps Script Web App) ===== */
+var BACKEND_URL = '';
+var SESSION = { token:null, role:null, name:null, isOwner:false, isAdmin:false, perms:{} };
+var BK_CFG = null, USERS_FULL = [], TRANSIT_LANES = [], NEWPW_NAME = '';
+function canDel(){ return !BACKEND_URL || SESSION.isOwner || SESSION.isAdmin || (SESSION.perms && SESSION.perms.delete); }
+async function callBackend(action, payload){
+  if(!BACKEND_URL) throw new Error('No backend URL set.');
+  var body = Object.assign({ action:action, token:SESSION.token||'' }, payload||{});
+  var res = await fetch(BACKEND_URL, { method:'POST', headers:{'Content-Type':'text/plain;charset=utf-8'}, body:JSON.stringify(body) });
+  return await res.json();
+}
+function toBk(s){ return { baseId:s.baseId, version:s.version, status:s.status, label:s.label, quoteName:s.name, preparedBy:s.prep, quoteDate:s.date, createdBy:s.createdBy, createdAt:s.createdAt, revisedBy:s.revisedBy, revisedAt:s.revisedAt, snapshot:s.snap }; }
+function fromBk(q){ return { baseId:q.baseId, label:q.label, version:+q.version||1, status:q.status||'draft', name:q.quoteName, prep:q.preparedBy, date:q.quoteDate, createdBy:q.createdBy, createdAt:q.createdAt, revisedBy:q.revisedBy, revisedAt:q.revisedAt, ts:(+q.revisedAt||+q.createdAt||Date.now()), snap:q.snapshot||{} }; }
+function syncCur(){ try{ if(BACKEND_URL && SESSION.token && LOADED){ var q=latestOf(LOADED.baseId); if(q) callBackend('saveQuote',{quote:toBk(q)}).then(function(r){ if(r&&r.error) console.warn(r.error); }).catch(function(){}); } }catch(e){} }
+function setv(id,val){ var e=$(id); if(e!=null && val!=null && val!=='') e.value=val; }
+function applySettings(st){
+  if(!st) return;
+  if(st.companyName){ setv('adminCompany',st.companyName); setv('dbCompany',st.companyName); }
+  setv('adminAddr', st.companyAddress);
+  if(st.defaultCurrency){ setv('adminCur',st.defaultCurrency); setv('curBase',st.defaultCurrency); }
+  if(st.defaultVAT!=null && st.defaultVAT!==''){ setv('adminVat',st.defaultVAT); setv('vatPct',st.defaultVAT); }
+  if(st.quotePrefix){ QUOTEPREFIX=String(st.quotePrefix); setv('adminPrefix',st.quotePrefix); }
+  if(st.disclaimer){ DISCLAIMER=String(st.disclaimer); setv('adminDisc',st.disclaimer); }
+  if(st.logoBase64){ LOGO=String(st.logoBase64); if(typeof applyLogo==='function') applyLogo(); }
+  if(st.co2_air!=null&&st.co2_air!==''){ CO2F.air=parseFloat(st.co2_air)||CO2F.air; setv('adminCo2Air',CO2F.air); }
+  if(st.co2_sea!=null&&st.co2_sea!==''){ CO2F.sea=parseFloat(st.co2_sea)||CO2F.sea; setv('adminCo2Sea',CO2F.sea); }
+  if(st.co2_road!=null&&st.co2_road!==''){ CO2F.road=parseFloat(st.co2_road)||CO2F.road; setv('adminCo2Road',CO2F.road); }
+  if(st.origin_charge!=null&&st.origin_charge!==''){ setv('originChg',st.origin_charge); setv('adminOrig',st.origin_charge); }
+  if(st.dest_charge!=null&&st.dest_charge!==''){ setv('destChg',st.dest_charge); setv('adminDest',st.dest_charge); }
+  if(st.insurance_pct!=null&&st.insurance_pct!==''){ setv('insPct',st.insurance_pct); setv('adminIns',st.insurance_pct); }
+  if(st.carbon_mode){ setv('carbonMode',st.carbon_mode); }
+  try{ if(typeof rebuildPrep==='function') rebuildPrep(); if(typeof compute==='function') compute(); if(typeof renderDashboard==='function') renderDashboard(); }catch(e){}
+}
+function gatherSettings(){
+  return {
+    companyName:$('adminCompany').value, companyAddress:$('adminAddr').value,
+    defaultCurrency:$('curBase').value, defaultVAT:$('vatPct').value, quotePrefix:QUOTEPREFIX,
+    disclaimer:($('adminDisc')?$('adminDisc').value:DISCLAIMER), logoBase64:LOGO,
+    co2_air:CO2F.air, co2_sea:CO2F.sea, co2_road:CO2F.road,
+    origin_charge:$('originChg').value, dest_charge:$('destChg').value, insurance_pct:$('insPct').value,
+    carbon_mode:($('carbonMode')?$('carbonMode').value:'manual')
+  };
+}
+function populateNames(names){ var sel=$('lgName'); if(!sel) return; sel.innerHTML=(names||[]).map(function(n){ return '<option>'+n+'</option>'; }).join(''); }
+function lgError(m){ var e=$('lgErr'); if(e) e.textContent=m||''; }
+function showPanel(which){ var map={setup:'lgSetup',login:'lgLogin',newpw:'lgNewpw'}; Object.keys(map).forEach(function(k){ var e=$(map[k]); if(e) e.style.display=(k===which)?'':'none'; }); }
+function showGate(){ var g=$('loginGate'); if(!g) return; g.style.display='flex'; lgError('');
+  if(BK_CFG && !BK_CFG.ownerSet){ showPanel('setup'); } else { showPanel('login'); } }
+function hideGate(){ var g=$('loginGate'); if(g) g.style.display='none'; }
+function showNewpw(name){ NEWPW_NAME=name; var e=$('npName'); if(e) e.textContent=name; var a=$('npPw'),b=$('npPw2'); if(a)a.value=''; if(b)b.value=''; showPanel('newpw'); }
+async function loadConfig(){
+  var c=await callBackend('getConfig',{});
+  if(!c || !c.ok) throw new Error((c&&c.error)||'Backend did not respond.');
+  BK_CFG=c; applySettings(c.settings); populateNames((c.users||[]).map(function(u){return u.name;}));
+  TRANSIT_LANES=c.transit||[];
+  return c;
+}
+function postLogin(r){
+  SESSION={ token:r.token, role:r.role, name:r.name, isOwner:!!r.isOwner, isAdmin:!!r.isAdmin, perms:r.perms||{} };
+  USERS_FULL=r.users||[]; USERS=USERS_FULL.map(function(u){return u.name;});
+  SAVES=(r.quotes||[]).map(fromBk);
+  rebuildPrep(); setv('dbPrep', r.name); renderSaved(); renderUsers();
+  hideGate(); applyPerms(); markConnected();
+}
+async function doSetupAdmin(){
+  lgError('');
+  var name=($('suName').value||'').trim(), pw=$('suPw').value, pw2=$('suPw2').value;
+  if(!name){ lgError(t('Enter a name.')); return; }
+  if((pw||'').length<6){ lgError(t('Password must be at least 6 characters.')); return; }
+  if(pw!==pw2){ lgError(t('Passwords do not match.')); return; }
+  try{ var r=await callBackend('setupAdmin',{name:name,password:pw});
+    if(!r||!r.ok){ lgError((r&&r.error)||'Setup failed.'); return; } postLogin(r);
+  }catch(e){ lgError(t('Could not reach the backend. Check the URL.')); }
+}
+async function doLogin(){
+  lgError('');
+  var name=$('lgName').value, pw=$('lgPin').value;
+  if(!name){ lgError(t('Pick your name.')); return; }
+  var u=((BK_CFG&&BK_CFG.users)||[]).filter(function(x){return x.name===name;})[0];
+  if(u && !u.hasPassword){ showNewpw(name); return; }
+  if(!pw){ lgError(t('Enter your password.')); return; }
+  try{ var r=await callBackend('login',{name:name,password:pw});
+    if(r&&r.needPassword){ showNewpw(name); return; }
+    if(!r||!r.ok){ lgError((r&&r.error)||t('Incorrect password.')); return; } postLogin(r);
+  }catch(e){ lgError(t('Could not reach the backend. Check the URL.')); }
+}
+async function doSetPassword(){
+  lgError('');
+  var pw=$('npPw').value, pw2=$('npPw2').value;
+  if((pw||'').length<6){ lgError(t('Password must be at least 6 characters.')); return; }
+  if(pw!==pw2){ lgError(t('Passwords do not match.')); return; }
+  try{ var r=await callBackend('setPassword',{name:NEWPW_NAME,password:pw});
+    if(!r||!r.ok){ lgError((r&&r.error)||'Failed.'); return; } postLogin(r);
+  }catch(e){ lgError(t('Could not reach the backend. Check the URL.')); }
+}
+function gatherPerms(ui){ var o={}; document.querySelectorAll('#adminUsers input[data-perm][data-ui="'+ui+'"]').forEach(function(cb){ o[cb.dataset.perm]=cb.checked; }); return o; }
+function saveUserPerms(ui){ var u=USERS_FULL[ui]; if(!u) return; callBackend('setUserPerms',{userName:u.name,perms:gatherPerms(ui)}).then(function(r){ if(r&&r.ok){ USERS_FULL=r.users||USERS_FULL; } else alert((r&&r.error)||'Failed.'); }).catch(function(){ alert('Could not reach backend.'); }); }
+function doGrantAdmin(ui,make){ var u=USERS_FULL[ui]; if(!u) return; callBackend('grantAdmin',{userName:u.name,makeAdmin:make}).then(function(r){ if(r&&r.ok){ USERS_FULL=r.users||USERS_FULL; } else alert((r&&r.error)||'Failed.'); renderUsers(); }).catch(function(){ alert('Could not reach backend.'); renderUsers(); }); }
+function doResetPw(ui){ var u=USERS_FULL[ui]; if(!u) return; if(!confirm(t('Reset password for ')+u.name+'?')) return; callBackend('resetPassword',{userName:u.name}).then(function(r){ if(r&&r.ok){ USERS_FULL=r.users||USERS_FULL; renderUsers(); } else alert((r&&r.error)||'Failed.'); }).catch(function(){ alert('Could not reach backend.'); }); }
+function doRemoveUser(ui){ var u=USERS_FULL[ui]; if(!u) return; if(!confirm(t('Remove ')+u.name+'?')) return; callBackend('removeUser',{userName:u.name}).then(function(r){ if(r&&r.ok){ USERS_FULL=r.users||[]; USERS=USERS_FULL.map(function(x){return x.name;}); renderUsers(); rebuildPrep(); } else alert((r&&r.error)||'Failed.'); }).catch(function(){ alert('Could not reach backend.'); }); }
+async function assignQuoteNo(){ if(BACKEND_URL&&SESSION.token){ try{ var r=await callBackend('nextQuoteNo',{prefix:QUOTEPREFIX}); if(r&&r.ok&&r.number) return r.number; }catch(e){} } return nextLabel(); }
+function en_(id,on){ var e=$(id); if(e){ e.disabled=!on; e.style.opacity=on?'':'0.55'; } }
+function applyPerms(){
+  var connected=!!BACKEND_URL, admin=(SESSION.isOwner||SESSION.isAdmin), p=SESSION.perms||{};
+  var all=['adminBackendUrl','testBackend','disconnectBackend','adminCompany','adminAddr','adminCur','adminVat','adminPrefix','adminLogo','adminDisc','adminNewUser','adminAddUser','adminCo2Air','adminCo2Sea','adminCo2Road','adminOrig','adminDest','adminIns'];
+  if(!connected){ all.forEach(function(id){ en_(id,true); }); var sb0=$('saveSettingsBtn'); if(sb0) sb0.style.display='none'; return; }
+  en_('adminBackendUrl',admin); en_('testBackend',admin); en_('disconnectBackend',true);
+  en_('adminCompany',admin); en_('adminAddr',admin); en_('adminPrefix',admin); en_('adminLogo',admin); en_('adminNewUser',admin); en_('adminAddUser',admin);
+  en_('adminCur', admin||!!p.currency); en_('adminVat', admin||!!p.vat); en_('adminDisc', admin||!!p.disclaimer);
+  en_('adminCo2Air', admin||!!p.co2); en_('adminCo2Sea', admin||!!p.co2); en_('adminCo2Road', admin||!!p.co2);
+  en_('adminOrig', admin||!!p.charges); en_('adminDest', admin||!!p.charges); en_('adminIns', admin||!!p.charges);
+  var sb=$('saveSettingsBtn'); if(sb) sb.style.display=(admin||p.currency||p.vat||p.disclaimer||p.co2||p.charges)?'block':'none';
+}
+function markConnected(){ ['previewBanner','comingHdr','comingNote'].forEach(function(id){ var e=$(id); if(e) e.style.display='none'; }); }
+function markLocal(){ ['previewBanner','comingHdr','comingNote'].forEach(function(id){ var e=$(id); if(e) e.style.display=''; }); }
+function bindBackend(){
+  var f=$('adminBackendUrl'); if(f) f.value=BACKEND_URL;
+  var tb=$('testBackend'); if(tb) tb.onclick=async function(){
+    var url=($('adminBackendUrl').value||'').trim();
+    if(!url){ $('backendStatus').textContent='Enter the Web App URL first.'; return; }
+    BACKEND_URL=url; localStorage.setItem('fce_backend_url',url);
+    $('backendStatus').textContent='Testing...';
+    try{ var c=await loadConfig(); $('backendStatus').textContent= c.ownerSet ? ('Connected. '+((c.users||[]).length)+' user(s). Sign in below.') : 'Connected. Set up the admin below.'; showGate(); applyPerms(); }
+    catch(e){ $('backendStatus').textContent='Could not connect: '+(e.message||e); }
+  };
+  var db=$('disconnectBackend'); if(db) db.onclick=function(){
+    BACKEND_URL=''; localStorage.removeItem('fce_backend_url'); SESSION={token:null,role:null,name:null,isOwner:false,isAdmin:false,perms:{}}; USERS_FULL=[];
+    hideGate(); markLocal(); renderUsers(); applyPerms(); $('backendStatus').textContent='Disconnected. Running locally (this session only).';
+  };
+  var su=$('suBtn'); if(su) su.onclick=doSetupAdmin;
+  var lb=$('lgBtn'); if(lb) lb.onclick=doLogin;
+  var np=$('npBtn'); if(np) np.onclick=doSetPassword;
+  var nb=$('npBack'); if(nb) nb.onclick=function(e){ e.preventDefault(); lgError(''); showPanel('login'); };
+  var lp=$('lgPin'); if(lp) lp.addEventListener('keydown',function(e){ if(e.key==='Enter') doLogin(); });
+  var np2=$('npPw2'); if(np2) np2.addEventListener('keydown',function(e){ if(e.key==='Enter') doSetPassword(); });
+  var su2=$('suPw2'); if(su2) su2.addEventListener('keydown',function(e){ if(e.key==='Enter') doSetupAdmin(); });
+  var ln=$('lgName'); if(ln) ln.addEventListener('change',function(){ var u=((BK_CFG&&BK_CFG.users)||[]).filter(function(x){return x.name===ln.value;})[0]; lgError(''); if(u&&!u.hasPassword){ showNewpw(ln.value); } });
+  var ll=$('lgLocal'); if(ll) ll.onclick=function(e){ e.preventDefault(); BACKEND_URL=''; localStorage.removeItem('fce_backend_url'); SESSION={token:null,role:null,name:null,isOwner:false,isAdmin:false,perms:{}}; USERS_FULL=[]; hideGate(); markLocal(); renderUsers(); applyPerms(); };
+  var ssb=$('saveSettingsBtn'); if(ssb) ssb.onclick=async function(){
+    if(!BACKEND_URL||!SESSION.token){ alert('Sign in first.'); return; }
+    ssb.textContent='Saving...';
+    try{ var r=await callBackend('setSettings',{ settings:gatherSettings() });
+      if(r&&r.ok){ ssb.textContent='Saved to Sheet'; if(r.rejected&&r.rejected.length) alert('Some settings were not permitted for your account: '+r.rejected.join(', ')); }
+      else { ssb.textContent='Save all settings to Sheet'; alert((r&&r.error)||'Save failed.'); } }
+    catch(e){ ssb.textContent='Save all settings to Sheet'; alert('Could not reach backend.'); }
+    setTimeout(function(){ ssb.textContent='Save all settings to Sheet'; },1600);
+  };
+}
+function bootBackend(){
+  bindBackend();
+  BACKEND_URL = localStorage.getItem('fce_backend_url') || '';
+  var f=$('adminBackendUrl'); if(f) f.value=BACKEND_URL;
+  if(BACKEND_URL){
+    var g=$('loginGate'); if(g){ g.style.display='flex'; showPanel('login'); lgError('Connecting\u2026'); }
+    loadConfig().then(function(){ showGate(); applyPerms(); }).catch(function(e){ lgError('Could not reach the backend. Check the URL or use locally.'); });
+  } else { markLocal(); applyPerms(); }
+}
+
+renderUsers();rebuildPrep();applyLogo();applyVis();checkDrafts();applyLang();
+updateBasisLabel(); updateCmpLabels(); setMode('sea'); fetchFx(); compute();
+bootBackend();
+</script>
+</body>
+</html>
