@@ -395,8 +395,8 @@
       <div class="card">
         <h2><span class="n">2</span> Route &amp; mode</h2>
         <div class="row c2">
-          <div class="field"><label>Origin</label><input id="origin" value="Shanghai, CN" /></div>
-          <div class="field"><label>Destination</label><input id="dest" value="Birmingham, UK" /></div>
+          <div class="field"><label>Origin</label><input id="origin" value="" placeholder="City, Country" /></div>
+          <div class="field"><label>Destination</label><input id="dest" value="" placeholder="City, Country" /></div>
         </div>
         <div class="row"><div class="field"><label>Transport mode</label>
           <div class="seg" id="modeSeg"><button data-mode="air">Air</button><button data-mode="sea" class="on">Sea</button><button data-mode="road">Road</button></div></div></div>
@@ -913,7 +913,7 @@ function modeSummary(m,a){
   if(!on)return {m,excluded:true};
   const rate=parseFloat(document.querySelector('.cmp-rate[data-m="'+m+'"]').value)||0;
   const trIn=document.querySelector('.cmp-tr[data-m="'+m+'"]').value;
-  const tr=trIn?trIn+' '+t('days'):'~'+transitEst(m)+' '+t('days');
+  const tr=trIn?trIn+' '+t('days'):(transitEst(m)>0?'~'+transitEst(m)+' '+t('days'):'0 '+t('days'));
   const co2=co2fmt(co2kg(a.totalWkg,m));
   if(rate<=0)return {m,rate:0,tr,co2};
   let mf=modeFreight({mode:m,sea:m==='sea'?state.sea:null},rate,a);let f=mf.freight;const minC=num('minCharge');if(minC>0&&f<minC)f=minC;
