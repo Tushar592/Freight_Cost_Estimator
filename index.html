@@ -268,13 +268,13 @@
       <button id="resetCalcTop" title="Reset calculator" style="height:32px;border:1px solid var(--line-strong);background:#fff;border-radius:7px;padding:0 12px;font-family:inherit;font-size:13px;cursor:pointer">↺ Reset</button>
       <button id="backToLive" title="Connect to the team version" style="display:none;height:32px;border:1px solid var(--blue);background:var(--blue);color:#fff;border-radius:7px;padding:0 14px;font-family:inherit;font-size:13px;cursor:pointer">Sign in</button>
     </div>
-    <button id="logoutBtn" style="display:none;height:32px;border:1px solid var(--line-strong);background:#fff;border-radius:7px;padding:0 12px;font-family:inherit;font-size:13px;cursor:pointer;margin-right:10px">Sign out</button>
     <div class="logo-slot" id="headerLogo" title="Company logo — set in admin"><span>Company logo<br>(set in admin)</span></div>
   </header>
 
   <div class="drawer-ov" id="drawerOv"></div>
   <aside class="drawer" id="adminDrawer">
     <div class="ah"><b>Admin settings</b><button class="x" id="adminClose">&times;</button></div>
+    <button id="logoutBtn2" class="newbtn" style="width:100%;margin-bottom:12px;display:none">Sign out</button>
     <div class="field" style="margin-bottom:8px"><label>Language</label>
       <select id="langSel"><option value="en">English</option><option value="de">Deutsch</option><option value="it">Italiano</option></select></div>
     <button id="openGuide" class="newbtn" style="width:100%;margin-bottom:14px">Open guide &amp; glossary</button>
@@ -1445,7 +1445,7 @@ function en_(id,on){ var e=$(id); if(e){ e.disabled=!on; e.style.opacity=on?'':'
 function applyPerms(){
   var rab=$('resetAllBtn'),ran=$('resetAllNote');var showReset=(!BACKEND_URL||SESSION.isOwner);if(rab)rab.style.display=showReset?'':'none';if(ran)ran.style.display=showReset?'':'none';
   var connected=!!(BACKEND_URL&&SESSION.token), admin=(SESSION.isOwner||SESSION.isAdmin), p=SESSION.perms||{};
-  var lo=$('logoutBtn'); if(lo) lo.style.display=connected?'':'none';
+  var lo2=$('logoutBtn2'); if(lo2) lo2.style.display=connected?'':'none';
   var bu=$('adminBackendUrl'); if(bu){ if(admin){ if(!bu.value) bu.value=BACKEND_URL; bu.placeholder=''; } else { bu.value=''; bu.placeholder=t('Hidden \u2014 admins only'); } }
   var all=['adminBackendUrl','testBackend','disconnectBackend','adminCompany','adminAddr','adminCur','adminVat','adminPrefix','adminLogo','adminDisc','adminNewUser','adminAddUser','adminCo2Air','adminCo2Sea','adminCo2Road'];
   if(!connected){ all.forEach(function(id){ en_(id,true); }); var sb0=$('saveSettingsBtn'); if(sb0) sb0.style.display='none'; return; }
@@ -1484,7 +1484,7 @@ function bindBackend(){
   var cpb=$('cpBtn'); if(cpb) cpb.onclick=doChangePassword;
   var cpk=$('cpBack'); if(cpk) cpk.onclick=function(e){ e.preventDefault(); lgError(''); showPanel('login'); };
   var btl=$('backToLive'); if(btl) btl.onclick=goLive;
-  var lob=$('logoutBtn'); if(lob) lob.onclick=doLogout;
+  var lob2=$('logoutBtn2'); if(lob2) lob2.onclick=doLogout;
   ['input','change'].forEach(function(ev){ document.addEventListener(ev,function(e){ var el=e.target; if(el&&el.closest&&el.closest('.drawer')&&!el.closest('#adminBackendUrl,#adminUsers,#adminNewUser')){ persistSettings(); } },true); });
   var ssb=$('saveSettingsBtn'); if(ssb) ssb.onclick=async function(){
     if(!BACKEND_URL||!SESSION.token){ alert('Sign in first.'); return; }
