@@ -12,7 +12,7 @@
   *{box-sizing:border-box}
   body{margin:0;background:var(--bg);color:var(--ink);font-family:"IBM Plex Sans",system-ui,sans-serif;font-size:14px;line-height:1.5}
   .num{font-family:"IBM Plex Mono",monospace}
-  .wrap{max-width:1180px;margin:0 auto;padding:20px}
+  .wrap{max-width:1180px;margin:0 auto;padding:20px 24px}
   header.app{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:18px}
   .brand{display:flex;align-items:center;gap:10px;font-size:26px;font-weight:700;letter-spacing:-.01em}
   .dot{width:11px;height:11px;border-radius:3px;background:var(--blue)}
@@ -127,10 +127,26 @@
   .mode-bar{height:22px;background:#eef0f3;border-radius:6px;overflow:hidden}
   .mode-bar>span{display:block;height:100%;background:var(--blue)}
   .mode-bar.best>span{background:#2a9d5c}
+  @media (max-width:860px){
+    .wrap{width:100%;padding:12px 12px 48px}
+    header.app{gap:8px} header.app>div{flex-wrap:wrap} .brand{font-size:20px}
+    .layout{grid-template-columns:1fr;gap:14px}
+    .row.c2,.row.c3,.metrics{grid-template-columns:1fr}
+    .prow-top{grid-template-columns:1fr 76px 30px}
+    .prow-bot{grid-template-columns:repeat(2,1fr)}
+    .cmp-grid{grid-template-columns:1fr}
+    .kpi-grid{grid-template-columns:1fr 1fr}
+    .db-parties,.db-cols,.dash-cols{grid-template-columns:1fr}
+    .globals{gap:8px;padding:10px 12px}
+    .tabs{overflow-x:auto;-webkit-overflow-scrolling:touch} .tab{white-space:nowrap}
+    .subnav{flex-wrap:wrap}
+    #a4{width:100%;padding:18px 16px}
+    .drawer{width:100%;max-width:100%}
+  }
   @media print{
     @page{size:A4;margin:0}
     *{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important}
-    body{background:#fff}
+    body{background:#fff;zoom:1!important}
     .wrap>header,.globals,.tabs,#viewEstimator,#viewComparison,.subnav,#dashOverview,.db-toolbar,#draftRemind,#discEdit,#refreshWarn{display:none!important}
     #viewDashboard{display:block!important}
     #dashQuote{display:block!important}
@@ -719,7 +735,7 @@ function transitLane(m){
     if(L.mode===m&&String(L.origin).trim().toLowerCase()===o&&String(L.dest).trim().toLowerCase()===d&&L.days>0)return L.days;}
   return null;
 }
-function transitEst(m){const lane=transitLane(m);if(lane)return lane;const d=distKmFor(m);if(m==='air')return Math.max(Math.round(d/4000)+2,2);if(m==='sea')return Math.max(Math.round(d/700)+6,5);return Math.max(Math.round(d/600)+1,1);}
+function transitEst(m){const o=($('origin').value||'').trim(),de=($('dest').value||'').trim();if(!o||!de)return 0;const lane=transitLane(m);if(lane)return lane;const d=distKmFor(m);if(m==='air')return Math.max(Math.round(d/4000)+2,2);if(m==='sea')return Math.max(Math.round(d/700)+6,5);return Math.max(Math.round(d/600)+1,1);}
 function num(id){const v=parseFloat($(id).value);return isNaN(v)?0:v;}
 function fmt(v,c){return new Intl.NumberFormat('en-US',{style:'currency',currency:c,maximumFractionDigits:0}).format(v);}
 function fmtNum(x){return String(Math.round(x*1000)/1000);}
@@ -877,7 +893,7 @@ function renderComparison(a){
     if(!on){out.innerHTML='<div class="muted">'+t('Excluded for this route')+'</div>';return;}
     const rate=parseFloat(document.querySelector('.cmp-rate[data-m="'+m+'"]').value)||0;
     const tr=document.querySelector('.cmp-tr[data-m="'+m+'"]').value;
-    const trShow=tr?`${tr} ${t('days')}`:`~${transitEst(m)} ${t('days')} ${t('(est.)')}`;
+    const trShow=tr?`${tr} ${t('days')}`:(transitEst(m)>0?`~${transitEst(m)} ${t('days')} ${t('(est.)')}`:`0 ${t('days')}`);
     const co2Show=co2fmt(co2kg(a.totalWkg,m));
     const envLines=(VIS.transit?`<div class="ln"><span>${t('Transit')}</span><span>${trShow}</span></div>`:'')+(VIS.carbon?`<div class="ln"><span>${t('Carbon footprint')}</span><span>${co2Show}</span></div>`:'');
     if(rate<=0){out.innerHTML='<div class="muted" style="padding-top:8px">'+t('Enter a rate for cost')+'</div>'+envLines;return;}
@@ -913,7 +929,7 @@ function renderDashboard(a){populateDashPick();
   const lf=landedFor(freight,a),g=lf.g;
   const modeName=state.mode==='air'?t('Air'):state.mode==='road'?t('Road'):(t('Sea')+' \u00b7 '+state.sea.toUpperCase());
   const tEl=document.querySelector('.cmp-tr[data-m="'+state.mode+'"]'); const trIn=tEl?tEl.value:'';
-  const trShow=trIn?trIn+' '+t('days'):'~'+transitEst(state.mode)+' '+t('days')+' '+t('(est.)');
+  const trShow=trIn?trIn+' '+t('days'):(transitEst(state.mode)>0?'~'+transitEst(state.mode)+' '+t('days')+' '+t('(est.)'):'0 '+t('days'));
   const altStr=(rep!=='(none)'&&fx>0)?'\u2248 '+fmt(lf.landed*fx,rep):'';
   const uplift=a.cargo>0?((lf.landed-a.cargo)/a.cargo*100):0;
   const co2self=co2fmt(co2kg(a.totalWkg,state.mode));
@@ -1276,6 +1292,8 @@ $('newQuote').onclick=newQuotation;
 ['input','change'].forEach(function(ev){document.addEventListener(ev,function(e){var el=e.target;if(el&&el.closest&&el.closest('#loginGate,.drawer,.drawer-ov'))return;DIRTY=true;PENDING_FINAL=false;},true);});
 if($('resetCalcTop'))$('resetCalcTop').onclick=function(){if(confirm(t('Reset the calculator? This clears the current estimate. Saved quotes are not affected.'))){newQuotation();try{compute();}catch(e){}}};
 if($('carbonMode'))$('carbonMode').onchange=function(){CARBONMODE=this.value;ECO={};try{compute();}catch(e){}};
+function fitZoom(){ try{ if(window.innerWidth<900){ document.body.style.zoom=''; return; } var dw=1228; var z=Math.min(Math.max(window.innerWidth/dw,1),1.6); document.body.style.zoom=String(z); }catch(e){} }
+window.addEventListener('resize',fitZoom); fitZoom();
 function exportAllQuotes(){try{var data=JSON.stringify({exportedAt:new Date().toISOString(),quotes:SAVES},null,2);var blob=new Blob([data],{type:'application/json'});var a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='freight-quotes-backup-'+new Date().toISOString().slice(0,10)+'.json';document.body.appendChild(a);a.click();document.body.removeChild(a);setTimeout(function(){URL.revokeObjectURL(a.href);},2000);}catch(e){alert('Backup failed: '+e);}}
 async function resetAllFlow(){
   if(!confirm(t('This permanently deletes ALL saved quotes and ALL users. This cannot be undone. Continue?')))return;
