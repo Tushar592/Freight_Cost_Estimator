@@ -167,6 +167,7 @@
     .subnav{flex-wrap:wrap}
     #a4{width:100%;padding:18px 16px}
     .drawer{width:100%;max-width:100%}
+    .drawer-rsz{display:none!important}
   }
   @media print{
     @page{size:A4;margin:0}
@@ -194,8 +195,11 @@
   .lang-sel{height:34px;border:1px solid var(--line-strong);border-radius:7px;background:#fff;font-family:inherit;font-size:12px;font-weight:600;padding:0 8px;color:var(--ink);cursor:pointer}
   .hamb{width:38px;height:38px;border:1px solid var(--line-strong);background:#fff;border-radius:8px;font-size:17px;cursor:pointer;color:var(--ink)}
   .drawer-ov{position:fixed;inset:0;background:rgba(0,0,0,.35);display:none;z-index:40}
-  .drawer{position:fixed;top:0;left:0;height:100%;width:380px;max-width:92vw;background:var(--surface);box-shadow:2px 0 24px rgba(0,0,0,.18);transform:translateX(-100%);transition:transform .2s;z-index:41;overflow-y:auto;padding:18px 20px}
+  .drawer{position:fixed;top:0;left:0;height:100%;width:460px;max-width:92vw;background:var(--surface);box-shadow:2px 0 24px rgba(0,0,0,.18);transform:translateX(-100%);transition:transform .2s;z-index:41;overflow-y:auto;padding:18px 20px}
   .drawer.open{transform:translateX(0)}
+  .drawer-rsz{position:fixed;top:0;width:9px;height:100%;cursor:ew-resize;z-index:42;display:none}
+  .drawer-rsz::before{content:"";position:absolute;left:3px;top:50%;transform:translateY(-50%);width:3px;height:54px;border-radius:3px;background:var(--line-strong)}
+  .drawer-rsz:hover::before{background:var(--blue)}
   .drawer h3{font-size:12px;text-transform:uppercase;letter-spacing:.04em;color:var(--muted);margin:18px 0 8px;border-top:1px solid var(--line);padding-top:12px}
   .drawer .ah{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
   .drawer .ah .x{border:0;background:none;font-size:24px;cursor:pointer;color:var(--muted);line-height:1}
@@ -250,7 +254,10 @@
   #viewGuide .gsec p:last-child{margin-bottom:0}
   #viewGuide dl{margin:0}#viewGuide dt{font-weight:600;font-size:13px;margin-top:8px}#viewGuide dd{margin:2px 0 0;color:var(--muted);font-size:13px}
   .gtag{display:inline-block;font-size:10px;padding:1px 7px;border-radius:10px;margin-left:6px}
-  .equip{width:100%;border-collapse:collapse;margin:4px 0 2px}
+  .equip{width:100%;border-collapse:collapse;margin:4px 0 2px;table-layout:fixed}
+  .equip th:first-child,.equip td:first-child{width:auto}
+  .equip th:nth-child(2),.equip td:nth-child(2),.equip th:nth-child(3),.equip td:nth-child(3),.equip th:nth-child(4),.equip td:nth-child(4),.equip th:nth-child(5),.equip td:nth-child(5){width:56px}
+  .equip th:nth-child(6),.equip td:nth-child(6){width:32px}
   .equip th{font-size:11px;color:var(--muted);text-align:left;font-weight:600;padding:2px 4px}
   .equip td{padding:2px 3px;vertical-align:middle}
   .equip td:first-child{color:var(--muted);font-size:12px;white-space:nowrap;padding-right:6px}
@@ -320,6 +327,7 @@
   </header>
 
   <div class="drawer-ov" id="drawerOv"></div>
+  <div class="drawer-rsz" id="drawerRsz"></div>
   <aside class="drawer" id="adminDrawer">
     <div class="ah"><b>Admin settings</b><button class="x" id="adminClose">&times;</button></div>
     <button id="logoutBtn2" class="newbtn" style="width:100%;margin-bottom:12px;display:none">Sign out</button>
@@ -1068,8 +1076,23 @@ function renderDashboard(a){populateDashPick();
   $('dbKpi').innerHTML=`<tr><td>${t('Logistics uplift over goods')}</td><td>${uplift.toFixed(1)}%</td></tr><tr><td>${t('Duty + tax')}</td><td>${fmt(lf.duty+lf.vat,base)}${A(lf.duty+lf.vat)}</td></tr><tr><td>${t('Freight')}</td><td>${fmt(freight,base)}${A(freight)}</td></tr>`;
   $('dbFoot').textContent=DISCLAIMER+' '+t('FX')+': 1 '+base+' = '+fx+(rep!=='(none)'?(' '+rep):'')+'. '+t('Generated')+' '+new Date().toLocaleDateString()+'.';
 }
-function openAdmin(){$('drawerOv').style.display='block';$('adminDrawer').classList.add('open');}
-function closeAdmin(){$('drawerOv').style.display='none';$('adminDrawer').classList.remove('open');}
+function openAdmin(){$('drawerOv').style.display='block';$('adminDrawer').classList.add('open');if(window.__drawerShowHandle)window.__drawerShowHandle();}
+function closeAdmin(){$('drawerOv').style.display='none';$('adminDrawer').classList.remove('open');if(window.__drawerHideHandle)window.__drawerHideHandle();}
+(function(){
+  var DRAG=false;
+  function dw(){return document.getElementById('adminDrawer');}
+  function handle(){return document.getElementById('drawerRsz');}
+  function isMobile(){return window.innerWidth<900;}
+  function clampW(x){return Math.max(360,Math.min(820,x));}
+  function savedW(){var w=parseInt(localStorage.getItem('fce_drawer_w')||'0',10);return (w>=360&&w<=820)?w:460;}
+  function applyW(w){var d=dw();if(d)d.style.width=w+'px';var h=handle();if(h)h.style.left=w+'px';}
+  window.__drawerShowHandle=function(){var d=dw(),h=handle();if(!d)return;if(isMobile()){d.style.width='';if(h)h.style.display='none';return;}applyW(savedW());if(h)h.style.display='block';};
+  window.__drawerHideHandle=function(){var h=handle();if(h)h.style.display='none';};
+  document.addEventListener('mousedown',function(e){if(e.target&&e.target.id==='drawerRsz'&&!isMobile()){DRAG=true;e.preventDefault();document.body.style.userSelect='none';}});
+  document.addEventListener('mousemove',function(e){if(!DRAG)return;applyW(clampW(e.clientX));});
+  document.addEventListener('mouseup',function(){if(!DRAG)return;DRAG=false;document.body.style.userSelect='';var d=dw();if(d){try{localStorage.setItem('fce_drawer_w',String(parseInt(d.style.width,10)||460));}catch(_){}}});
+})();
+
 function applyLogo(){const img=LOGO?('<img src="'+LOGO+'" alt="logo">'):'';if($('headerLogo'))$('headerLogo').innerHTML=LOGO?img:'<span>Company logo<br>(set in admin)</span>';if($('dbLogo'))$('dbLogo').innerHTML=LOGO?img:'Company logo<br>(set in admin)';if($('adminLogoPrev'))$('adminLogoPrev').innerHTML=LOGO?img:'<span class="hint">No logo uploaded</span>';if($('lgLogoWrap'))$('lgLogoWrap').innerHTML=LOGO?('<img src="'+LOGO+'" alt="logo" style="max-height:56px;max-width:220px">'):'';}
 function onLogoFile(e){const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=ev=>{const im=new Image();im.onload=()=>{const c=document.createElement('canvas');const w=Math.min(im.width,250),h=im.height*(w/im.width);c.width=w;c.height=h;c.getContext('2d').drawImage(im,0,0,w,h);LOGO=c.toDataURL('image/png');applyLogo();};im.src=ev.target.result;};r.readAsDataURL(f);}
 function rebuildPrep(){const sel=$('dbPrep');if(!sel)return;const cur=sel.value;sel.innerHTML='<option value="">— select —</option>'+USERS.map(n=>'<option>'+n+'</option>').join('');sel.value=cur;}
