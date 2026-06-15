@@ -1636,6 +1636,7 @@ async function loadConfig(){
   var c=await callBackend('getConfig',{});
   if(!c || !c.ok) throw new Error((c&&c.error)||'Backend did not respond.');
   BK_CFG=c;
+  if(c.logoBase64){ LOGO=String(c.logoBase64); try{applyLogo();}catch(e){} }
   return c;
 }
 function postLogin(r){
