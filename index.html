@@ -470,7 +470,6 @@
           <div class="field"><label>Destination country</label><select id="destCountry"></select></div>
         </div>
         <div class="row c2" id="emiOptRow">
-          <div class="field"><label>Vehicle type (road)</label><select id="vehicleType"><option value="">Average</option><option value="small">Small (&lt;3.5 t)</option><option value="medium">Medium (3.5-7.5 t)</option><option value="large">Large (7.5-17 t)</option><option value="articulated">Articulated (&gt;17 t)</option></select></div>
           <div class="field"><label>Fuel source</label><select id="fuelSource"><option value="">Diesel (default)</option><option value="petrol">Petrol</option><option value="electric">Electric</option><option value="hybrid">Hybrid</option><option value="hvo">HVO</option><option value="cng">CNG</option><option value="lng">LNG</option><option value="hydrogen">Hydrogen</option></select></div>
         </div>
         <div class="row"><div class="field"><label>Transport mode</label>
@@ -583,7 +582,6 @@
         <div class="cmp-h"><span class="nm">Air</span><label class="inc"><input type="checkbox" class="cmp-on" data-m="air" checked> Include</label></div>
         <div class="field"><label class="cmp-rl" data-m="air">Rate (<span class="curLbl">USD</span> per kg)</label><input class="cmp-rate num" data-m="air" placeholder="rate"></div>
         <div class="field"><label>Distance (<span class="u-d">km</span>)</label><input class="cmp-dist num" data-m="air" placeholder="route dist"></div>
-        <div class="field"><label>Transit days</label><input class="cmp-tr num" data-m="air" placeholder="—"></div>
         <div class="cmp-out" id="out-air"></div>
       </div>
       <div class="cmp" id="cmp-sea">
@@ -593,14 +591,12 @@
         <div class="field"><label>Distance (<span class="seaUnitLbl">km</span>)</label>
           <div style="display:flex;gap:8px;align-items:center"><input class="cmp-dist num" data-m="sea" placeholder="route dist" style="flex:1">
           <div class="seg" style="width:auto"><button type="button" data-su="km" class="on">km</button><button type="button" data-su="nm">NM</button></div></div></div>
-        <div class="field"><label>Transit days</label><input class="cmp-tr num" data-m="sea" placeholder="—"></div>
         <div class="cmp-out" id="out-sea"></div>
       </div>
       <div class="cmp" id="cmp-road">
         <div class="cmp-h"><span class="nm">Road</span><label class="inc"><input type="checkbox" class="cmp-on" data-m="road" checked> Include</label></div>
         <div class="field"><label class="cmp-rl" data-m="road">Rate (<span class="curLbl">USD</span> per km)</label><input class="cmp-rate num" data-m="road" placeholder="rate"></div>
         <div class="field"><label>Distance (<span class="u-d">km</span>)</label><input class="cmp-dist num" data-m="road" placeholder="route dist"></div>
-        <div class="field"><label>Transit days</label><input class="cmp-tr num" data-m="road" placeholder="—"></div>
         <div class="cmp-out" id="out-road"></div>
       </div>
     </div>
@@ -811,7 +807,7 @@ var EMI={sig:null,results:null,loading:false,error:null}, EMI_T=null, EMI_PENDIN
 
 function emiVal(id){var e=$(id);return e?String(e.value||'').trim():'';}
 function emiInputsReady(){return !!(emiVal('originCountry')&&emiVal('destCountry'));}
-function emiSig(w){return [(($('origin')&&$('origin').value)||'').trim(),(($('dest')&&$('dest').value)||'').trim(),emiVal('originCountry'),emiVal('destCountry'),Math.round(w||0),emiVal('vehicleType'),emiVal('fuelSource')].join('|').toLowerCase();}
+function emiSig(w){return [(($('origin')&&$('origin').value)||'').trim(),(($('dest')&&$('dest').value)||'').trim(),emiVal('originCountry'),emiVal('destCountry'),Math.round(w||0),roadVehicleType(),emiVal('fuelSource')].join('|').toLowerCase();}
 function emiGet(mode,w){if(EMI.results&&EMI.sig===emiSig(w)){var r=EMI.results[mode];return (r&&r.ok)?r:null;}return null;}
 
 function emiSchedule(w){
@@ -831,7 +827,7 @@ function emiFetch(sig,w){
     destination_location:(($('dest')&&$('dest').value)||'').trim(),
     destination_country:emiVal('destCountry'),
     weight:w, unit:'kg', mode:state.mode, modes:['road','sea','air'],
-    vehicle_type:emiVal('vehicleType'), fuel_source:emiVal('fuelSource')
+    vehicle_type:roadVehicleType(), fuel_source:emiVal('fuelSource')
   }).then(function(r){
     if(emiSig(EMI_W)!==sig)return;
     if(r&&r.ok){ EMI={sig:sig,loading:false,error:null,results:r.results}; }
@@ -862,11 +858,31 @@ function buildCountrySelects(){
     if(cur)sel.value=cur;
   });
 }
+function roadVehicleType(){
+  var sel=$('truck'); if(!sel) return '';
+  var pl=parseFloat(String(sel.value||'').split('|')[3])||0;
+  if(pl<=0) return '';
+  if(pl<3500) return 'small';
+  if(pl<7500) return 'medium';
+  if(pl<17000) return 'large';
+  return 'articulated';
+}
+function countryName(code){ for(var i=0;i<COUNTRIES.length;i++){ if(COUNTRIES[i][0]===code) return COUNTRIES[i][1]; } return code; }
+var AUTO_SHIP='', AUTO_CONS='';
+function syncAddr(){
+  var oCity=(($('origin')&&$('origin').value)||'').trim(), dCity=(($('dest')&&$('dest').value)||'').trim();
+  var oc=emiVal('originCountry'), dc=emiVal('destCountry');
+  var sa=$('shipAddr'), ca=$('consAddr');
+  if(sa){ var v=[oCity, oc?countryName(oc):''].filter(Boolean).join(', '); if(v && (sa.value.trim()===''||sa.value.trim()===AUTO_SHIP)){ sa.value=v; AUTO_SHIP=v; } }
+  if(ca){ var w=[dCity, dc?countryName(dc):''].filter(Boolean).join(', '); if(w && (ca.value.trim()===''||ca.value.trim()===AUTO_CONS)){ ca.value=w; AUTO_CONS=w; } }
+}
 function initEmiUI(){
   buildCountrySelects();
-  ['originCountry','destCountry','vehicleType','fuelSource'].forEach(function(id){
-    var e=$(id); if(e)e.addEventListener('change',function(){try{compute();}catch(_){}});
+  ['originCountry','destCountry','fuelSource'].forEach(function(id){
+    var e=$(id); if(e)e.addEventListener('change',function(){try{syncAddr();}catch(_){}; try{compute();}catch(_){}});
   });
+  ['origin','dest'].forEach(function(id){ var e=$(id); if(e)e.addEventListener('input',function(){try{syncAddr();}catch(_){}}); });
+  var tk=$('truck'); if(tk)tk.addEventListener('change',function(){try{compute();}catch(_){}});
 }
 
 let DRAFT_DISMISS={};
@@ -1053,7 +1069,7 @@ function renderComparison(a){
     card.classList.toggle('excl',!on);
     if(!on){out.innerHTML='<div class="muted">'+t('Excluded for this route')+'</div>';return;}
     const rate=parseFloat(document.querySelector('.cmp-rate[data-m="'+m+'"]').value)||0;
-    const tr=document.querySelector('.cmp-tr[data-m="'+m+'"]').value;
+    var trEl=document.querySelector('.cmp-tr[data-m="'+m+'"]'); const tr=trEl?trEl.value:'';
     const trShow=tr?`${tr} ${t('days')}`:(transitEst(m)>0?`~${transitEst(m)} ${t('days')} ${t('(est.)')}`:`0 ${t('days')}`);
     let co2Show=co2fmt(co2kg(a.totalWkg,m));if(CARBONMODE==='emissions'){var _em=emiGet(m,a.totalWkg),_es=emiGet(state.mode,a.totalWkg);if(_em&&_em.distance_km!=null)co2Show+=' \u00b7 '+Math.round(_em.distance_km).toLocaleString()+' km';if(_em&&_es&&_es.co2e_kg>0&&m!==state.mode){var _p=Math.round((_em.co2e_kg-_es.co2e_kg)/_es.co2e_kg*100);co2Show+=' \u00b7 '+(_p>=0?'+':'')+_p+'%';}}
     const envLines=(VIS.transit?`<div class="ln"><span>${t('Transit')}</span><span>${trShow}</span></div>`:'')+(VIS.carbon?`<div class="ln"><span>${t('Carbon footprint')}</span><span>${co2Show}</span></div>`:'');
@@ -1630,6 +1646,7 @@ function postLogin(r){
   if(r.settings) applySettings(r.settings);
   if(r.transit) TRANSIT_LANES=r.transit;
   try{ applyEquip({containers:r.containers,trucks:r.trucks}); }catch(e){}
+  try{ applyLogo(); }catch(e){}
   try{ populateRouteList(); }catch(e){}
   rebuildPrep(); setv('dbPrep', r.name); renderSaved(); renderUsers();
   hideGate(); applyPerms(); markConnected();
