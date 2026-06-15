@@ -1089,7 +1089,7 @@ function modeSummary(m,a){
   const on=document.querySelector('.cmp-on[data-m="'+m+'"]').checked;
   if(!on)return {m,excluded:true};
   const rate=parseFloat(document.querySelector('.cmp-rate[data-m="'+m+'"]').value)||0;
-  const trIn=document.querySelector('.cmp-tr[data-m="'+m+'"]').value;
+  var _te=document.querySelector('.cmp-tr[data-m="'+m+'"]'); const trIn=_te?_te.value:'';
   const tr=trIn?trIn+' '+t('days'):(transitEst(m)>0?'~'+transitEst(m)+' '+t('days'):'0 '+t('days'));
   const co2=co2fmt(co2kg(a.totalWkg,m));
   if(rate<=0)return {m,rate:0,tr,co2};
@@ -1767,7 +1767,7 @@ function bootBackend(){
 }
 
 renderUsers();rebuildPrep();applyLogo();applyVis();checkDrafts();applyLang();
-updateBasisLabel(); updateCmpLabels(); setMode('sea'); fetchFx(); compute();
+updateBasisLabel(); updateCmpLabels(); setMode('sea'); fetchFx(); try{compute();}catch(e){}
 bootBackend();
 try{restoreAutosave();}catch(e){}
 </script>
